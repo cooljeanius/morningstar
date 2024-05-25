@@ -76,6 +76,9 @@ jobs:
         cache: true
         modules: qt5compat
 
+    - name: Other dependencies
+      run: sudo apt-get -qq install -y libc6-dev-amd64-cross libgcc-s1-amd64-cross qt6-base-dev libglu1-mesa-dev libvulkan-dev glslang-tools libtbb-dev
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
