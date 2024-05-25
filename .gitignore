@@ -45,3 +45,6 @@ dist/
 wespal
 wespal.exe
 Wespal.app
+wesnoth-rcx.app
+.qmake.stash
+Makefile
