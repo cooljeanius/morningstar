@@ -1,83 +1,124 @@
-//
-// codename Morning Star
-//
-// Copyright (C) 2012 - 2019 by Iris Morelle <shadowm2006@gmail.com>
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-//
+/*
+ * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
+ *
+ * Copyright (C) 2012 - 2024 by Iris Morelle <iris@irydacea.me>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include "paletteitem.hpp"
 
+#include <QGuiApplication>
 #include <QColorDialog>
 #include <QEvent>
 #include <QPainter>
 
 namespace {
-	struct PainterRestorer
+
+struct PainterRestorer
+{
+	PainterRestorer(QPainter* painter)
+		: painter_(painter)
 	{
-		PainterRestorer(QPainter *painter) : painter_(painter) {
-			painter_->save();
-		}
-		~PainterRestorer() {
-			painter_->restore();
-		}
-	private:
-		QPainter *painter_;
-	};
+		painter_->save();
+	}
+
+	~PainterRestorer()
+	{
+		painter_->restore();
+	}
+
+private:
+	QPainter* painter_;
+};
+
+inline qreal pixelRatioFallback(const QWidget* target)
+{
+	return target ? target->devicePixelRatio() : qGuiApp->devicePixelRatio();
 }
 
-QIcon createColorIcon(const QColor& color, int width, int height)
-{
-	QPixmap base(width, height);
-	base.fill(QColor(255, 255, 255, 0));
+} // end unnamed namespace
 
-	QPainter painter(&base);
-	QBrush brush(color);
-	QPen pen(Qt::black, 1);
+QIcon createColorIconPrivate(const QColor& color,
+							 const QSize& size,
+							 const QWidget* target,
+							 bool drawSlash)
+{
+	static constexpr qreal borderWidth = 1.0;
+	static constexpr qreal outerMargin = 2.0;
+	static constexpr QMarginsF innerMargin = {
+		outerMargin, outerMargin,
+		outerMargin, outerMargin
+	};
+
+	const auto pixelRatio = pixelRatioFallback(target);
+
+	QPixmap base{size * pixelRatio};
+
+	base.setDevicePixelRatio(pixelRatio);
+	base.fill(Qt::transparent);
+
+	QPainter painter{&base};
+	QBrush brush{color};
+	QPen pen{Qt::black, borderWidth};
+	QRectF borderRect{QPointF{outerMargin, outerMargin},
+					  QSizeF{size}.shrunkBy(innerMargin)};
 
 	painter.setBrush(brush);
 	painter.setPen(pen);
-	painter.drawRect(base.rect().adjusted(1,1,-2,-2));
+
+	if (drawSlash) {
+		QLineF slash{borderRect.topRight(), borderRect.bottomLeft()};
+		painter.drawLine(slash);
+	}
+
+	painter.drawRect(borderRect);
 
 	return base;
 }
 
-PaletteItemDelegate::PaletteItemDelegate(QObject *parent) :
-	QStyledItemDelegate(parent),
-	border_size_(2),
-	width_(16), height_(17)
+QIcon createColorIcon(const QColor& color,
+					  const QSize& size,
+					  const QWidget* target)
 {
+	return createColorIconPrivate(color, size, target, false);
 }
 
-void PaletteItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+QIcon createEmptyColorIcon(const QSize& size,
+						   const QWidget* target)
 {
-	PainterRestorer restorer(painter);
+	return createColorIconPrivate(Qt::transparent, size, target, true);
+}
+
+void PaletteItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+	PainterRestorer restorer{painter};
 
 	// The actual item region.
-	QRect area = option.rect;
+	QRect area{option.rect};
 
 	QPen pen;
 
-	if(option.state & QStyle::State_Selected) {
+	if (option.state & QStyle::State_Selected) {
 		pen.setStyle(Qt::SolidLine);
 		pen.setCapStyle(Qt::SquareCap);
 		pen.setJoinStyle(Qt::MiterJoin);
-		pen.setWidth(border_size_);
+		pen.setWidth(borderSize_);
 		pen.setColor(option.palette.color(QPalette::Highlight));
 		// Shrink the rectangle so the borders can fit.
-		area.adjust(border_size_/2, border_size_/2, -border_size_/2, -border_size_/2);
+		area.adjust(borderSize_/2, borderSize_/2, -borderSize_/2, -borderSize_/2);
 	} else {
 		pen.setStyle(Qt::NoPen);
 	}
@@ -89,13 +130,13 @@ void PaletteItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 
 bool PaletteItemDelegate::editorEvent(QEvent* event, QAbstractItemModel* model, const QStyleOptionViewItem& /*option*/, const QModelIndex& index)
 {
-	if(event->type() != QEvent::MouseButtonDblClick)
+	if (event->type() != QEvent::MouseButtonDblClick)
 		return false;
 
 	QColor color = index.data(Qt::UserRole).toUInt();
 	color = QColorDialog::getColor(color, qobject_cast<QWidget*>(this->parent()));
 
-	if(color.isValid())
+	if (color.isValid())
 		model->setData(index, color.rgb(), Qt::UserRole);
 
 	return true;

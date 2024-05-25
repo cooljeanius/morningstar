@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>440</width>
-    <height>440</height>
+    <width>796</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,199 +18,588 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>440</width>
-    <height>440</height>
+    <width>650</width>
+    <height>450</height>
    </size>
   </property>
   <property name="acceptDrops">
    <bool>true</bool>
   </property>
   <property name="windowTitle">
-   <string>Wesnoth RCX</string>
+   <string>Wespal</string>
   </property>
-  <widget class="QWidget" name="grid">
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="6" column="0">
-     <layout class="QHBoxLayout" name="hlCommands">
-      <item>
-       <widget class="QToolButton" name="tbZoomOut">
-        <property name="toolTip">
-         <string>Zoom Out</string>
-        </property>
-        <property name="whatsThis">
-         <string>Reduces the zoom level.</string>
-        </property>
-        <property name="text">
-         <string>−</string>
-        </property>
-        <property name="autoRaise">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSlider" name="zoomSlider">
-        <property name="maximumSize">
-         <size>
-          <width>120</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>Zoom</string>
-        </property>
-        <property name="whatsThis">
-         <string>Allows to choose the view's zoom level.</string>
-        </property>
-        <property name="maximum">
-         <number>5</number>
-        </property>
-        <property name="pageStep">
-         <number>4</number>
-        </property>
-        <property name="value">
-         <number>1</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QToolButton" name="tbZoomIn">
-        <property name="toolTip">
-         <string>Zoom In</string>
-        </property>
-        <property name="whatsThis">
-         <string>Increases the zoom level.</string>
-        </property>
-        <property name="text">
-         <string>+</string>
-        </property>
-        <property name="autoRaise">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDialogButtonBox" name="buttonBox">
-        <property name="standardButtons">
-         <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="0">
-     <layout class="QHBoxLayout" name="hlPreviews" stretch="1,1">
-      <item>
-       <widget class="QScrollArea" name="previewOriginalContainer">
-        <property name="whatsThis">
-         <string>This is the original image's preview.</string>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
-        </property>
-        <property name="verticalScrollBarPolicy">
-         <enum>Qt::ScrollBarAlwaysOn</enum>
-        </property>
-        <property name="horizontalScrollBarPolicy">
-         <enum>Qt::ScrollBarAlwaysOn</enum>
-        </property>
-        <property name="widgetResizable">
-         <bool>false</bool>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-        <widget class="QWidget" name="scrollAreaWidgetContents_2">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>270</width>
-           <height>162</height>
-          </rect>
+  <widget class="QWidget" name="workAreaRoot">
+   <layout class="QHBoxLayout" name="workAreaRootLayout">
+    <item>
+     <widget class="QFrame" name="workAreaImagePanel">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>400</width>
+        <height>0</height>
+       </size>
+      </property>
+      <layout class="QVBoxLayout" name="workAreaImagePanelLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>4</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QStackedWidget" name="staWorkAreaParent">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <property name="whatsThis">
-          <string/>
+         <property name="currentIndex">
+          <number>0</number>
          </property>
-         <widget class="ImageLabel" name="previewOriginal" native="true">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>72</width>
-            <height>72</height>
-           </rect>
-          </property>
+         <widget class="QWidget" name="pageNoFile">
+          <layout class="QVBoxLayout" name="pageNoFileLayout">
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelOpenFileHint">
+             <property name="text">
+              <string>&lt;big&gt;Open or drag an image here:&lt;/big&gt;</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+             <property name="buddy">
+              <cstring>cmdOpen</cstring>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="cmdOpen">
+               <property name="text">
+                <string>Open</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QFrame" name="panelMru">
+             <layout class="QHBoxLayout" name="_2">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_2">
+                <item>
+                 <widget class="QLabel" name="labelMruHint">
+                  <property name="text">
+                   <string>&lt;big&gt;... or select a recent image:&lt;/big&gt;</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
+                  </property>
+                  <property name="buddy">
+                   <cstring>listMru</cstring>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QListWidget" name="listMru">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="uniformItemSizes">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="pageWorkAreaSplit">
+          <layout class="QVBoxLayout" name="pageWorkAreaSplitLayout">
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QScrollArea" name="previewOriginalContainer">
+             <property name="frameShadow">
+              <enum>QFrame::Sunken</enum>
+             </property>
+             <property name="verticalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
+             </property>
+             <property name="horizontalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
+             </property>
+             <property name="widgetResizable">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <widget class="QWidget" name="previewOriginalContents">
+              <property name="geometry">
+               <rect>
+                <x>41</x>
+                <y>0</y>
+                <width>0</width>
+                <height>0</height>
+               </rect>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="whatsThis">
+               <string/>
+              </property>
+              <widget class="ImageLabel" name="previewOriginal" native="true">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>100</width>
+                 <height>30</height>
+                </rect>
+               </property>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+           <item>
+            <widget class="QScrollArea" name="previewRcContainer">
+             <property name="frameShadow">
+              <enum>QFrame::Sunken</enum>
+             </property>
+             <property name="verticalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
+             </property>
+             <property name="horizontalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
+             </property>
+             <property name="widgetResizable">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <widget class="QWidget" name="previewRcContents">
+              <property name="geometry">
+               <rect>
+                <x>41</x>
+                <y>0</y>
+                <width>0</width>
+                <height>0</height>
+               </rect>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <widget class="ImageLabel" name="previewRc" native="true">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>100</width>
+                 <height>30</height>
+                </rect>
+               </property>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="pageWorkAreaComposite">
+          <layout class="QVBoxLayout" name="pageWorkAreaCompositeLayout">
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QScrollArea" name="previewCompositeContainer">
+             <property name="frameShadow">
+              <enum>QFrame::Sunken</enum>
+             </property>
+             <property name="verticalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
+             </property>
+             <property name="horizontalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
+             </property>
+             <property name="widgetResizable">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <widget class="QWidget" name="previewCompositeContents">
+              <property name="geometry">
+               <rect>
+                <x>41</x>
+                <y>0</y>
+                <width>0</width>
+                <height>0</height>
+               </rect>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <widget class="CompositeImageLabel" name="previewComposite" native="true">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>72</width>
+                 <height>72</height>
+                </rect>
+               </property>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="viewSlider">
+             <property name="whatsThis">
+              <string>Selects the amount of the recolored image that should be shown, from none (left) to full (right).</string>
+             </property>
+             <property name="maximum">
+              <number>1000</number>
+             </property>
+             <property name="singleStep">
+              <number>1</number>
+             </property>
+             <property name="pageStep">
+              <number>100</number>
+             </property>
+             <property name="value">
+              <number>1000</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="tickPosition">
+              <enum>QSlider::TicksAbove</enum>
+             </property>
+             <property name="tickInterval">
+              <number>250</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </widget>
-       </widget>
-      </item>
-      <item>
-       <widget class="QScrollArea" name="previewRcContainer">
-        <property name="whatsThis">
-         <string>This is a preview of a single transformation of the original image.</string>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Sunken</enum>
-        </property>
-        <property name="verticalScrollBarPolicy">
-         <enum>Qt::ScrollBarAlwaysOn</enum>
-        </property>
-        <property name="horizontalScrollBarPolicy">
-         <enum>Qt::ScrollBarAlwaysOn</enum>
-        </property>
-        <property name="widgetResizable">
-         <bool>false</bool>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-        <widget class="QWidget" name="scrollAreaWidgetContents_3">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>271</width>
-           <height>162</height>
-          </rect>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="workAreaViewModeLayout">
+         <property name="spacing">
+          <number>6</number>
          </property>
-         <widget class="ImageLabel" name="previewRc" native="true">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>72</width>
-            <height>72</height>
-           </rect>
-          </property>
-         </widget>
-        </widget>
-       </widget>
-      </item>
-     </layout>
+         <item>
+          <widget class="QSlider" name="zoomSlider">
+           <property name="maximumSize">
+            <size>
+             <width>120</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>Zoom</string>
+           </property>
+           <property name="whatsThis">
+            <string>Changes the zoom level for the image previews.</string>
+           </property>
+           <property name="maximum">
+            <number>5</number>
+           </property>
+           <property name="pageStep">
+            <number>4</number>
+           </property>
+           <property name="value">
+            <number>1</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QFrame" name="compositeShortcutsPanel">
+           <layout class="QHBoxLayout" name="compositeShortcutsPanelLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="compositeOriginalOnlyToggle">
+              <property name="maximumSize">
+               <size>
+                <width>32</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Original image</string>
+              </property>
+              <property name="whatsThis">
+               <string>Selects the original image to be displayed fully in Swipe/Onion Skin previews.</string>
+              </property>
+              <property name="text">
+               <string>O</string>
+              </property>
+              <property name="icon">
+               <iconset theme="media-skip-backward"/>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="compositeRcOnlyToggle">
+              <property name="maximumSize">
+               <size>
+                <width>32</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Recolored image</string>
+              </property>
+              <property name="whatsThis">
+               <string>Selects the recolored image to be displayed fully in Swipe/Onion Skin previews.</string>
+              </property>
+              <property name="text">
+               <string>R</string>
+              </property>
+              <property name="icon">
+               <iconset theme="media-skip-forward"/>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="cbxViewMode">
+           <property name="whatsThis">
+            <string>Selects the display mode for the composite view.</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>Vertical Split</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Horizontal Split</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Swipe</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Onion Skin</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
     </item>
-    <item row="2" column="0" rowspan="3">
-     <layout class="QHBoxLayout" name="hlOptions" stretch="1,0,1">
-      <item>
-       <spacer name="hpaddingLeft">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>10</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="vlOptions" stretch="0,0,1">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QFrame" name="workAreaOptionsPanel">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <layout class="QGridLayout" name="workAreaOptionsPanelLayout">
+       <property name="leftMargin">
+        <number>4</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QGroupBox" name="groupFunctionSelection">
+         <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
            <widget class="QRadioButton" name="radRc">
             <property name="sizePolicy">
@@ -220,10 +609,12 @@
              </sizepolicy>
             </property>
             <property name="whatsThis">
-             <string>Selects color range-based (a.k.a. &quot;team color&quot;) recoloring.</string>
+             <string>Selects color range-based recoloring, also known as &quot;team color&quot;.
+
+(Equivalent to Wesnoth's ~RC() and ~TC() functions.)</string>
             </property>
             <property name="text">
-             <string>Color &amp;range (TC)</string>
+             <string>Color &amp;range/team color</string>
             </property>
            </widget>
           </item>
@@ -236,105 +627,245 @@
              </sizepolicy>
             </property>
             <property name="whatsThis">
-             <string>Selects palette switching mode, to replace original colors with new ones using a color values list instead of ranges.</string>
+             <string>Selects palette swap mode, which replaces colors in the image using two reference palettes.
+
+(Equivalent to Wesnoth's ~PAL() function.)</string>
             </property>
             <property name="text">
-             <string>Palette &amp;switch</string>
+             <string>Palette &amp;swap</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radBlend">
+            <property name="whatsThis">
+             <string>Selects color blending mode, which blends a single color into all pixels in the image at a given percentage.
+
+(Equivalent to Wesnoth's ~BLEND() function.)</string>
+            </property>
+            <property name="text">
+             <string>Color &amp;blend</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radShift">
+            <property name="whatsThis">
+             <string>Selects color shifting mode, which transforms colors in an image by adding or substracting to their values for each channel.
+
+(Equivalent to Wesnoth's ~CS() function.)</string>
+            </property>
+            <property name="text">
+             <string>Color s&amp;hift</string>
             </property>
            </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <layout class="QFormLayout" name="flKeyPal">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-          </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="lblKeyPal">
-            <property name="text">
-             <string>Palette &amp;key:</string>
-            </property>
-            <property name="buddy">
-             <cstring>cbxKeyPal</cstring>
-            </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Maximum</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>6</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="5" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <widget class="QPushButton" name="cmdGenerateWml">
+           <property name="whatsThis">
+            <string>Generates Wesnoth Image Path Functions for displaying the transformed image in-game.</string>
+           </property>
+           <property name="text">
+            <string>Co&amp;de</string>
+           </property>
+           <property name="icon">
+            <iconset theme="format-text-code"/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDialogButtonBox" name="buttonBox">
+           <property name="standardButtons">
+            <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="2" column="0">
+        <widget class="QGroupBox" name="groupFunctionOptions">
+         <property name="title">
+          <string/>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QFrame" name="groupRcKey">
+            <layout class="QFormLayout" name="formLayout_4">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="lblKeyPal">
+               <property name="whatsThis">
+                <string>Selects the source palette used for color range and palette swap transforms.</string>
+               </property>
+               <property name="text">
+                <string>&amp;Key palette:</string>
+               </property>
+               <property name="buddy">
+                <cstring>cbxKeyPal</cstring>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="cbxKeyPal">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="whatsThis">
+                <string>Selects the source palette used for color range and palette swap transforms.</string>
+               </property>
+               <property name="sizeAdjustPolicy">
+                <enum>QComboBox::AdjustToContents</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="cbxKeyPal">
+          <item>
+           <widget class="QStackedWidget" name="staFunctionOpts">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="whatsThis">
-             <string>Selects the original palette for transformation.</string>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>120</height>
+             </size>
             </property>
-            <property name="sizeAdjustPolicy">
-             <enum>QComboBox::AdjustToContents</enum>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QStackedWidget" name="staFunctionOpts">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>120</height>
-           </size>
-          </property>
-          <property name="currentIndex">
-           <number>0</number>
-          </property>
-          <widget class="QWidget" name="pageRcRanges">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <layout class="QGridLayout" name="gridLayout_3">
-            <property name="margin">
+            <property name="currentIndex">
              <number>0</number>
             </property>
-            <item row="0" column="0">
-             <widget class="QListWidget" name="listRanges">
-              <property name="whatsThis">
-               <string>Allows to select color ranges to apply. Click on an item to preview the transformation to the right.</string>
+            <widget class="QWidget" name="pageRcRanges">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <property name="leftMargin">
+               <number>0</number>
               </property>
-              <property name="wordWrap">
-               <bool>true</bool>
+              <property name="topMargin">
+               <number>0</number>
               </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-          <widget class="QWidget" name="pageRcPal">
-           <layout class="QGridLayout" name="gridLayout_2">
-            <property name="sizeConstraint">
-             <enum>QLayout::SetMinimumSize</enum>
-            </property>
-            <property name="margin">
-             <number>0</number>
-            </property>
-            <item row="0" column="0">
-             <layout class="QFormLayout" name="flRcPal">
-              <property name="fieldGrowthPolicy">
-               <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QListWidget" name="listRanges">
+                <property name="whatsThis">
+                 <string>Allows selecting which color range to preview. Items with a checkmark will also be saved to disk when using the Save action.</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="rcRangesToolsLayout">
+                <item>
+                 <spacer name="horizontalSpacer_4">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="cmdRcSelectAll">
+                  <property name="whatsThis">
+                   <string>Marks all color ranges for saving to disk.</string>
+                  </property>
+                  <property name="text">
+                   <string>A&amp;ll</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="cmdRcSelectNone">
+                  <property name="whatsThis">
+                   <string>Unmarks all color ranges for saving to disk.</string>
+                  </property>
+                  <property name="text">
+                   <string>&amp;None</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="pageRcPal">
+             <layout class="QFormLayout" name="formLayout">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetMinimumSize</enum>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
               </property>
               <item row="0" column="0">
                <widget class="QLabel" name="lblNewPal">
                 <property name="enabled">
                  <bool>true</bool>
+                </property>
+                <property name="whatsThis">
+                 <string>Selects the replacement palette for palette swapping.</string>
                 </property>
                 <property name="text">
                  <string>New &amp;palette:</string>
@@ -347,13 +878,13 @@
               <item row="0" column="1">
                <widget class="QComboBox" name="cbxNewPal">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="whatsThis">
-                 <string>You an choose the replacement palette in this box.</string>
+                 <string>Selects the replacement palette for palette swapping.</string>
                 </property>
                 <property name="sizeAdjustPolicy">
                  <enum>QComboBox::AdjustToContents</enum>
@@ -361,40 +892,272 @@
                </widget>
               </item>
              </layout>
-            </item>
-           </layout>
-          </widget>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <spacer name="hpaddingRight">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>10</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </item>
-    <item row="5" column="0">
-     <widget class="Line" name="line">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="Line" name="line_2">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
+            </widget>
+            <widget class="QWidget" name="pageBlendParams">
+             <layout class="QFormLayout" name="formLayout_2">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::ExpandingFieldsGrow</enum>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lblBlendColor">
+                <property name="whatsThis">
+                 <string>Sets the color to blend into the image</string>
+                </property>
+                <property name="text">
+                 <string>&amp;Color:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>leBlendColor</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout">
+                <item>
+                 <widget class="QLineEdit" name="leBlendColor">
+                  <property name="whatsThis">
+                   <string>Sets the color to blend into the image</string>
+                  </property>
+                  <property name="inputMask">
+                   <string>\#HHHHHH</string>
+                  </property>
+                  <property name="text">
+                   <string>#333333</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QToolButton" name="tbBlendColor">
+                  <property name="whatsThis">
+                   <string>Sets the color to blend into the image</string>
+                  </property>
+                  <property name="text">
+                   <string>...</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lblBlendFactor">
+                <property name="whatsThis">
+                 <string>Sets the color blend rate as a percentage, with the color fully replacing existing colors at 100% and having no effect at 0%</string>
+                </property>
+                <property name="text">
+                 <string>&amp;Percentage:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>spinBlendFactor</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout_6">
+                <item>
+                 <widget class="QSlider" name="sliderBlendFactor">
+                  <property name="whatsThis">
+                   <string>Sets the color blend rate as a percentage, with the color fully replacing existing colors at 100% and having no effect at 0%</string>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="spinBlendFactor">
+                  <property name="whatsThis">
+                   <string>Sets the color blend rate as a percentage, with the color fully replacing existing colors at 100% and having no effect at 0%</string>
+                  </property>
+                  <property name="suffix">
+                   <string>%</string>
+                  </property>
+                  <property name="maximum">
+                   <number>100</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="pageShiftParams">
+             <layout class="QFormLayout" name="formLayout_3">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::ExpandingFieldsGrow</enum>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="lblRedShift">
+                <property name="whatsThis">
+                 <string>Sets the red channel shift amount</string>
+                </property>
+                <property name="text">
+                 <string>&amp;Red:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>spinRedShift</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <widget class="QSlider" name="sliderRedShift">
+                  <property name="whatsThis">
+                   <string>Sets the red channel shift amount</string>
+                  </property>
+                  <property name="minimum">
+                   <number>-255</number>
+                  </property>
+                  <property name="maximum">
+                   <number>255</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="spinRedShift">
+                  <property name="whatsThis">
+                   <string>Sets the red channel shift amount</string>
+                  </property>
+                  <property name="minimum">
+                   <number>-255</number>
+                  </property>
+                  <property name="maximum">
+                   <number>255</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="lblGreenShift">
+                <property name="whatsThis">
+                 <string>Sets the green channel shift amount</string>
+                </property>
+                <property name="text">
+                 <string>&amp;Green:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>spinGreenShift</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <widget class="QSlider" name="sliderGreenShift">
+                  <property name="whatsThis">
+                   <string>Sets the green channel shift amount</string>
+                  </property>
+                  <property name="minimum">
+                   <number>-255</number>
+                  </property>
+                  <property name="maximum">
+                   <number>255</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="spinGreenShift">
+                  <property name="whatsThis">
+                   <string>Sets the green channel shift amount</string>
+                  </property>
+                  <property name="minimum">
+                   <number>-255</number>
+                  </property>
+                  <property name="maximum">
+                   <number>255</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="lblBlueShift">
+                <property name="whatsThis">
+                 <string>Sets the blue channel shift amount</string>
+                </property>
+                <property name="text">
+                 <string>&amp;Blue:</string>
+                </property>
+                <property name="buddy">
+                 <cstring>spinBlueShift</cstring>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <layout class="QHBoxLayout" name="horizontalLayout_5">
+                <item>
+                 <widget class="QSlider" name="sliderBlueShift">
+                  <property name="whatsThis">
+                   <string>Sets the blue channel shift amount</string>
+                  </property>
+                  <property name="minimum">
+                   <number>-255</number>
+                  </property>
+                  <property name="maximum">
+                   <number>255</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="spinBlueShift">
+                  <property name="whatsThis">
+                   <string>Sets the blue channel shift amount</string>
+                  </property>
+                  <property name="minimum">
+                   <number>-255</number>
+                  </property>
+                  <property name="maximum">
+                   <number>255</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
    </layout>
@@ -404,20 +1167,32 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>440</width>
-     <height>19</height>
+     <width>796</width>
+     <height>37</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <widget class="QMenu" name="menuMru">
+     <property name="title">
+      <string>Open &amp;Recent</string>
+     </property>
+     <property name="icon">
+      <iconset theme="document-open-recent"/>
+     </property>
+     <addaction name="action_MruPlaceholder"/>
+     <addaction name="separator"/>
+     <addaction name="action_ClearMru"/>
+    </widget>
     <addaction name="action_Open"/>
+    <addaction name="menuMru"/>
     <addaction name="action_Save"/>
     <addaction name="separator"/>
     <addaction name="action_Reload"/>
     <addaction name="separator"/>
-    <addaction name="action_RecentPlaceholder"/>
+    <addaction name="action_Close"/>
     <addaction name="separator"/>
     <addaction name="action_Quit"/>
    </widget>
@@ -425,6 +1200,9 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="actionChangeLog"/>
+    <addaction name="actionReportBugs"/>
+    <addaction name="separator"/>
     <addaction name="actionAbout_Morning_Star"/>
    </widget>
    <widget class="QMenu" name="menu_Tools">
@@ -434,9 +1212,31 @@
     <property name="title">
      <string>&amp;Tools</string>
     </property>
-    <widget class="QMenu" name="menuPreview_Background">
+    <addaction name="actionBase64"/>
+    <addaction name="separator"/>
+    <addaction name="actionAppSettings"/>
+   </widget>
+   <widget class="QMenu" name="menu_View">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <widget class="QMenu" name="menu_Zoom">
      <property name="title">
-      <string>Preview &amp;Background</string>
+      <string>&amp;Zoom</string>
+     </property>
+     <addaction name="actionZoomIn"/>
+     <addaction name="actionZoomOut"/>
+     <addaction name="separator"/>
+     <addaction name="actionZoom50"/>
+     <addaction name="actionZoom100"/>
+     <addaction name="actionZoom200"/>
+     <addaction name="actionZoom400"/>
+     <addaction name="actionZoom800"/>
+     <addaction name="actionZoom1600"/>
+    </widget>
+    <widget class="QMenu" name="menuBgColor">
+     <property name="title">
+      <string>&amp;Background</string>
      </property>
      <addaction name="actionPreviewBgDefault"/>
      <addaction name="actionPreviewBgWhite"/>
@@ -446,100 +1246,215 @@
      <addaction name="separator"/>
      <addaction name="actionPreviewBgCustom"/>
     </widget>
-    <addaction name="menuPreview_Background"/>
+    <addaction name="menu_Zoom"/>
     <addaction name="separator"/>
-    <addaction name="actionColor_ranges"/>
-    <addaction name="action_Palettes"/>
+    <addaction name="menuBgColor"/>
+    <addaction name="separator"/>
+    <addaction name="actionViewVSplit"/>
+    <addaction name="actionViewHSplit"/>
+    <addaction name="actionViewSwipe"/>
+    <addaction name="actionViewOnionSkin"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+    <addaction name="actionCopy"/>
+    <addaction name="actionCopyOriginal"/>
+    <addaction name="actionPaste"/>
    </widget>
    <addaction name="menu_File"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menu_View"/>
    <addaction name="menu_Tools"/>
    <addaction name="menu_Help"/>
   </widget>
   <action name="action_Open">
+   <property name="icon">
+    <iconset theme="document-open"/>
+   </property>
    <property name="text">
     <string>&amp;Open...</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+O</string>
-   </property>
   </action>
   <action name="action_Quit">
+   <property name="icon">
+    <iconset theme="application-exit"/>
+   </property>
    <property name="text">
     <string>&amp;Quit</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+Q</string>
+   <property name="menuRole">
+    <enum>QAction::QuitRole</enum>
    </property>
   </action>
   <action name="actionAbout_Morning_Star">
+   <property name="icon">
+    <iconset theme="help-about"/>
+   </property>
    <property name="text">
-    <string>About Wesnoth &amp;RCX...</string>
+    <string>About &amp;Wespal...</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::AboutRole</enum>
    </property>
   </action>
   <action name="action_Save">
+   <property name="icon">
+    <iconset theme="document-save"/>
+   </property>
    <property name="text">
     <string>&amp;Save...</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+S</string>
-   </property>
-  </action>
-  <action name="actionColor_ranges">
-   <property name="text">
-    <string>Custom Color &amp;Ranges...</string>
-   </property>
-   <property name="visible">
-    <bool>true</bool>
-   </property>
-  </action>
-  <action name="action_Palettes">
-   <property name="text">
-    <string>Custom &amp;Palettes...</string>
-   </property>
   </action>
   <action name="action_Reload">
+   <property name="icon">
+    <iconset theme="view-refresh"/>
+   </property>
    <property name="text">
     <string>Reloa&amp;d</string>
    </property>
-   <property name="shortcut">
-    <string>F5</string>
-   </property>
   </action>
-  <action name="action_RecentPlaceholder">
+  <action name="action_MruPlaceholder">
    <property name="text">
     <string>&lt;Recent files&gt;</string>
    </property>
   </action>
-  <action name="actionPreviewBgWhite">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
+  <action name="action_ClearMru">
    <property name="text">
-    <string>&amp;White</string>
+    <string>&amp;Clear Menu</string>
    </property>
   </action>
-  <action name="actionPreviewBgLight">
-   <property name="checkable">
-    <bool>true</bool>
+  <action name="action_Close">
+   <property name="icon">
+    <iconset theme="window-close"/>
    </property>
    <property name="text">
-    <string>&amp;Light</string>
+    <string>Close</string>
    </property>
   </action>
-  <action name="actionPreviewBgDark">
+  <action name="actionViewVSplit">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Da&amp;rk</string>
+    <string>&amp;Vertical Split</string>
+   </property>
+   <property name="shortcut">
+    <string>1</string>
    </property>
   </action>
-  <action name="actionPreviewBgBlack">
+  <action name="actionViewHSplit">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>&amp;Black</string>
+    <string>&amp;Horizontal Split</string>
+   </property>
+   <property name="shortcut">
+    <string>2</string>
+   </property>
+  </action>
+  <action name="actionViewSwipe">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Swipe</string>
+   </property>
+   <property name="shortcut">
+    <string>3</string>
+   </property>
+  </action>
+  <action name="actionViewOnionSkin">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Onion Skin</string>
+   </property>
+   <property name="shortcut">
+    <string>4</string>
+   </property>
+  </action>
+  <action name="actionZoom50">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;50%</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+6</string>
+   </property>
+  </action>
+  <action name="actionZoom100">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;100%</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
+  </action>
+  <action name="actionZoom200">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;200%</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+2</string>
+   </property>
+  </action>
+  <action name="actionZoom400">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;400%</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+3</string>
+   </property>
+  </action>
+  <action name="actionZoom800">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;800%</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+4</string>
+   </property>
+  </action>
+  <action name="actionZoomIn">
+   <property name="icon">
+    <iconset theme="zoom-in"/>
+   </property>
+   <property name="text">
+    <string>Zoom &amp;In</string>
+   </property>
+  </action>
+  <action name="actionZoomOut">
+   <property name="icon">
+    <iconset theme="zoom-out"/>
+   </property>
+   <property name="text">
+    <string>Zoom &amp;Out</string>
+   </property>
+  </action>
+  <action name="actionPreviewBgCustom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Custom...</string>
    </property>
   </action>
   <action name="actionPreviewBgDefault">
@@ -553,12 +1468,109 @@
     <string>&amp;Default</string>
    </property>
   </action>
-  <action name="actionPreviewBgCustom">
+  <action name="actionPreviewBgBlack">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>&amp;Custom...</string>
+    <string>&amp;Black</string>
+   </property>
+  </action>
+  <action name="actionPreviewBgDark">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Da&amp;rk</string>
+   </property>
+  </action>
+  <action name="actionPreviewBgLight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Light</string>
+   </property>
+  </action>
+  <action name="actionPreviewBgWhite">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;White</string>
+   </property>
+  </action>
+  <action name="actionZoom1600">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>1&amp;600%</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+5</string>
+   </property>
+  </action>
+  <action name="actionReportBugs">
+   <property name="icon">
+    <iconset theme="tools-report-bug"/>
+   </property>
+   <property name="text">
+    <string>Report &amp;Issues</string>
+   </property>
+  </action>
+  <action name="actionChangeLog">
+   <property name="icon">
+    <iconset theme="help-contents"/>
+   </property>
+   <property name="text">
+    <string>Release &amp;Notes</string>
+   </property>
+  </action>
+  <action name="actionAppSettings">
+   <property name="icon">
+    <iconset theme="configure"/>
+   </property>
+   <property name="text">
+    <string>&amp;Settings...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+,</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::PreferencesRole</enum>
+   </property>
+  </action>
+  <action name="actionBase64">
+   <property name="text">
+    <string>Generate &amp;Base64...</string>
+   </property>
+  </action>
+  <action name="actionCopy">
+   <property name="icon">
+    <iconset theme="edit-copy"/>
+   </property>
+   <property name="text">
+    <string>&amp;Copy Recolored</string>
+   </property>
+  </action>
+  <action name="actionCopyOriginal">
+   <property name="icon">
+    <iconset theme="edit-copy"/>
+   </property>
+   <property name="text">
+    <string>C&amp;opy Original</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+C</string>
+   </property>
+  </action>
+  <action name="actionPaste">
+   <property name="icon">
+    <iconset theme="edit-paste"/>
+   </property>
+   <property name="text">
+    <string>&amp;Paste</string>
    </property>
   </action>
  </widget>
@@ -569,19 +1581,44 @@
    <extends>QWidget</extends>
    <header>src/imagelabel.hpp</header>
   </customwidget>
+  <customwidget>
+   <class>CompositeImageLabel</class>
+   <extends>QWidget</extends>
+   <header>src/compositeimagelabel.hpp</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
  <tabstops>
+  <tabstop>cmdOpen</tabstop>
+  <tabstop>listMru</tabstop>
   <tabstop>previewOriginalContainer</tabstop>
   <tabstop>previewRcContainer</tabstop>
+  <tabstop>previewCompositeContainer</tabstop>
+  <tabstop>viewSlider</tabstop>
+  <tabstop>zoomSlider</tabstop>
+  <tabstop>compositeOriginalOnlyToggle</tabstop>
+  <tabstop>compositeRcOnlyToggle</tabstop>
+  <tabstop>cbxViewMode</tabstop>
   <tabstop>radRc</tabstop>
   <tabstop>radPal</tabstop>
+  <tabstop>radBlend</tabstop>
+  <tabstop>radShift</tabstop>
   <tabstop>cbxKeyPal</tabstop>
   <tabstop>listRanges</tabstop>
+  <tabstop>cmdRcSelectAll</tabstop>
+  <tabstop>cmdRcSelectNone</tabstop>
   <tabstop>cbxNewPal</tabstop>
-  <tabstop>tbZoomOut</tabstop>
-  <tabstop>zoomSlider</tabstop>
-  <tabstop>tbZoomIn</tabstop>
-  <tabstop>buttonBox</tabstop>
+  <tabstop>leBlendColor</tabstop>
+  <tabstop>tbBlendColor</tabstop>
+  <tabstop>sliderBlendFactor</tabstop>
+  <tabstop>spinBlendFactor</tabstop>
+  <tabstop>sliderRedShift</tabstop>
+  <tabstop>spinRedShift</tabstop>
+  <tabstop>sliderGreenShift</tabstop>
+  <tabstop>spinGreenShift</tabstop>
+  <tabstop>sliderBlueShift</tabstop>
+  <tabstop>spinBlueShift</tabstop>
+  <tabstop>cmdGenerateWml</tabstop>
  </tabstops>
  <resources/>
  <connections/>

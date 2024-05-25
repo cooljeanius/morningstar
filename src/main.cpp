@@ -1,22 +1,22 @@
-//
-// codename Morning Star
-//
-// Copyright (C) 2008 - 2019 by Iris Morelle <shadowm2006@gmail.com>
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-//
+/*
+ * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
+ *
+ * Copyright (C) 2008 - 2024 by Iris Morelle <iris@irydacea.me>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include "mainwindow.hpp"
 #include "version.hpp"
@@ -26,28 +26,39 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-	QString initial_file = "";
+#if defined(Q_OS_WINDOWS) && QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+	// Avoid the icky Windows 11 style being enabled by default
+	QApplication::setStyle("WindowsVista");
+#endif
+
+	QApplication a{argc, argv};
+	QString initialFile;
 	QStringList argvq = a.arguments();
 
-	if(argvq.count() > 1)
-		initial_file = argvq.last();
+	if (argvq.count() > 1) {
+		initialFile = argvq.last();
+	}
 
-	QCoreApplication::setApplicationName("Morning Star");
-	QCoreApplication::setOrganizationName("Wesnoth");
-	QCoreApplication::setOrganizationDomain("wesnoth.org");
-	QCoreApplication::setApplicationVersion(mos_version);
+	QCoreApplication::setApplicationName("Wespal");
+	QCoreApplication::setOrganizationName("Irydacea");
+	QCoreApplication::setOrganizationDomain("irydacea.me");
+	QCoreApplication::setApplicationVersion(MOS_VERSION);
 
-	a.setWindowIcon(QIcon(":/wesnoth-rcx-icon-64.png"));
+#ifdef Q_OS_MACOS
+	QCoreApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
+#endif
+
+	// Doesn't do anything on Wayland but it's needed elsewhere.
+	a.setWindowIcon(QIcon{":/wespal-icon-512.png"});
+	// Required on Wayland
+	QGuiApplication::setDesktopFileName("me.irydacea.Wespal");
 
 	MainWindow w;
-	w.show();
 
-	QTimer::singleShot(0, [&w, &initial_file]() {
-		if(!w.initial_open(initial_file)) {
-			QApplication::exit(1);
-		}
-	});
+	if (!initialFile.isEmpty())
+		w.openFile(initialFile);
+
+	w.show();
 
 	return a.exec();
 }

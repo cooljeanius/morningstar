@@ -1,158 +1,304 @@
-//
-// codename Morning Star
-//
-// Copyright (C) 2010 - 2019 by Iris Morelle <shadowm2006@gmail.com>
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-//
+/*
+ * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
+ *
+ * Copyright (C) 2010 - 2024 by Iris Morelle <iris@irydacea.me>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include "appconfig.hpp"
 
+#include <QBuffer>
 #include <QSettings>
 #include <QMessageBox>
 
+namespace MosConfig {
+
 namespace {
-	const unsigned max_recent_files = 4;
-}
 
-void mos_config_load(QMap<QString, color_range> &ranges, QMap<QString, QList<QRgb> > &palettes)
+// This is supposed to be a color value that will never be used (we never
+// write alpha values other than 0x00 or 0xFF for the relevant config).
+constexpr unsigned COMPAT_NO_COLOR_RANGE_ICON = 0xDEADCAFEU;
+
+} // end unnamed namespace
+
+Manager::Manager()
+	: imageFilesMru_()
+	, customColorRanges_()
+	, customPalettes_()
+	, rememberMainWindowSize_()
+	, mainWindowSize_()
+	, defaultZoom_()
+	, previewBackgroundColor_()
+	, rememberImageViewMode_()
+	, imageViewMode_()
+	, pngVanityPlate_()
 {
-	QSettings s;
+	QSettings qs;
 
-	const int nranges = s.beginReadArray("color_ranges");
+	//
+	// Workspace configuation
+	//
 
-	for(int i = 0; i < nranges; ++i) {
-		s.setArrayIndex(i);
-		const color_range r(
-			s.value("avg").toUInt(),
-			s.value("max").toUInt(),
-			s.value("min").toUInt());
-		ranges.insert(s.value("id").toString(), r);
-	}
+	rememberMainWindowSize_ = qs.value("preview/rememberWindowSize", true).toBool();
 
-	s.endArray();
+	mainWindowSize_ = qs.value("preview/windowSize").toSize();
 
-	const int npals = s.beginReadArray("palettes");
+	defaultZoom_ = qs.value("preview/defaultZoom", qreal(1.0)).toReal();
 
-	for(int i = 0; i < npals; ++i) {
-		s.setArrayIndex(i);
+	previewBackgroundColor_ = qs.value("preview/background").toString();
 
-		const QStringList vals = s.value("values").toString().split(",", QString::SkipEmptyParts);
-		QList<QRgb> rgblist;
+	rememberImageViewMode_ = qs.value("preview/rememberMode", true).toBool();
 
-		for(const QString& v : vals) {
-			rgblist.push_back(v.toUInt());
+	imageViewMode_ = qs.value("preview/mode", ImageViewVSplit).value<ImageViewMode>();
+
+	//
+	// Backend configuration
+	//
+
+	pngVanityPlate_ = qs.value("fileOptions/pngVanityPlate", true).toBool();
+
+	//
+	// User-defined color ranges
+	//
+
+	const int numRanges = qs.beginReadArray("color_ranges");
+
+	for (int i = 0; i < numRanges; ++i)
+	{
+		qs.setArrayIndex(i);
+
+		auto id = qs.value("id").toString();
+		auto mid = qs.value("avg").toUInt();
+		auto max = qs.value("max").toUInt();
+		auto min = qs.value("min").toUInt();
+		auto rep = qs.value("rep", COMPAT_NO_COLOR_RANGE_ICON).toUInt();
+
+		// Compatibility with color ranges created before v0.5
+		if (rep == COMPAT_NO_COLOR_RANGE_ICON) {
+			rep = mid;
 		}
 
-		palettes.insert(s.value("id").toString(), rgblist);
+		ColorRange colorRange{mid, max, min, rep};
+
+		customColorRanges_.insert(id, colorRange);
 	}
 
-	s.endArray();
+	qs.endArray();
+
+	//
+	// User-defined color palettes
+	//
+
+	const int numPals = qs.beginReadArray("palettes");
+
+	for (int i = 0; i < numPals; ++i)
+	{
+		qs.setArrayIndex(i);
+
+		// TODO: use QStringList variant instead
+
+		auto id = qs.value("id").toString();
+		auto values = qs.value("values").toString().split(',', Qt::SkipEmptyParts);
+
+		ColorList palette;
+		palette.reserve(values.count());
+
+		for (const auto& value : values)
+			palette.emplaceBack(value.toUInt());
+
+		customPalettes_.insert(id, palette);
+	}
+
+	qs.endArray();
+
+	//
+	// Recent files
+	//
+
+	const int numRecentFiles = qs.beginReadArray("recent_files");
+
+	for (int i = numRecentFiles - 1; i >= 0; --i)
+	{
+		qs.setArrayIndex(i);
+
+		auto path = qs.value("path").toString();
+		auto thumbnailBase64 = qs.value("thumbnail").toString();
+
+		imageFilesMru_.push(path, thumbnailBase64);
+	}
+
+	qs.endArray();
 }
 
-void mos_config_save(const QMap<QString, color_range> &ranges, const QMap<QString, QList<QRgb> > &palettes)
+void Manager::setRememberMainWindowSize(bool remember)
 {
-	QSettings s;
-	int j;
+	QSettings qs;
 
-	s.beginWriteArray("color_ranges");
-	j = 0;
-	for(QMap<QString, color_range>::const_iterator i = ranges.constBegin();
-		i != ranges.constEnd(); ++i, ++j)
+	rememberMainWindowSize_ = remember;
+
+	qs.setValue("preview/rememberWindowSize", remember);
+}
+
+void Manager::setMainWindowSize(const QSize& size)
+{
+	QSettings qs;
+
+	mainWindowSize_ = size;
+
+	qs.setValue("preview/windowSize", size);
+}
+
+void Manager::setDefaultZoom(qreal zoom)
+{
+	QSettings qs;
+
+	defaultZoom_ = zoom;
+
+	qs.setValue("preview/defaultZoom", zoom);
+}
+
+void Manager::setPreviewBackgroundColor(const QString& previewBackgroundColor)
+{
+	QSettings qs;
+
+	previewBackgroundColor_ = previewBackgroundColor;
+
+	qs.setValue("preview/background", previewBackgroundColor);
+}
+
+void Manager::setRememberImageViewMode(bool remember)
+{
+	QSettings qs;
+
+	rememberImageViewMode_ = remember;
+
+	qs.setValue("preview/rememberMode", remember);
+}
+
+void Manager::setImageViewMode(ImageViewMode imageViewMode)
+{
+	QSettings qs;
+
+	imageViewMode_ = imageViewMode;
+
+	qs.setValue("preview/mode", imageViewMode);
+}
+
+void Manager::setPngVanityPlate(bool enable)
+{
+	QSettings qs;
+
+	pngVanityPlate_ = enable;
+
+	qs.setValue("fileOptions/pngVanityPlate", enable);
+}
+
+void Manager::setCustomColorRanges(const QMap<QString, ColorRange>& colorRanges)
+{
+	QSettings qs;
+	int i = 0;
+
+	customColorRanges_ = colorRanges;
+
+	qs.beginWriteArray("color_ranges");
+
+	for (const auto& [id, colorRange] : customColorRanges_.asKeyValueRange())
 	{
-		s.setArrayIndex(j);
-		s.setValue("id", i.key());
-		s.setValue("avg", i.value().mid());
-		s.setValue("max", i.value().max());
-		s.setValue("min", i.value().min());
+		qs.setArrayIndex(i);
+
+		qs.setValue("id", id);
+		qs.setValue("avg", colorRange.mid());
+		qs.setValue("max", colorRange.max());
+		qs.setValue("min", colorRange.min());
+		qs.setValue("rep", colorRange.rep());
+
+		++i;
 	}
-	s.endArray();
 
-	s.beginWriteArray("palettes");
-	j = 0;
-	for(QMap<QString, QList<QRgb> >::const_iterator i = palettes.constBegin();
-		i != palettes.constEnd(); ++i, ++j)
+	qs.endArray();
+}
+
+void Manager::setCustomPalettes(const QMap<QString, ColorList>& palettes)
+{
+	QSettings qs;
+	int i = 0;
+
+	customPalettes_ = palettes;
+
+	qs.beginWriteArray("palettes");
+
+	for (const auto& [id, palette] : customPalettes_.asKeyValueRange())
 	{
-		s.setArrayIndex(j);
-		s.setValue("id", i.key());
+		qs.setArrayIndex(i);
 
-		QString csv;
+		// TODO: use QStringList variant instead
 
-		for(QRgb v : i.value()) {
-			if(!csv.isEmpty())
-				csv += ',';
-			csv += QString::number(v);
+		QString colorList;
+
+		for (auto color : palette)
+		{
+			if (!colorList.isEmpty())
+				colorList += ',';
+			colorList += QString::number(color);
 		}
 
-		s.setValue("values", csv);
-	}
-	s.endArray();
-}
+		qs.setValue("id", id);
+		qs.setValue("values", colorList);
 
-unsigned mos_max_recent_files()
-{
-	return max_recent_files;
-}
-
-QStringList mos_recent_files()
-{
-	return QSettings().value("recent_files").toStringList();
-}
-
-void mos_add_recent_file(const QString& filepath)
-{
-	QSettings s;
-
-	QStringList recent = s.value("recent_files").toStringList();
-	recent.removeAll(filepath);
-
-	recent.push_front(filepath);
-
-	while(recent.size() > int(max_recent_files)) {
-		recent.pop_back();
+		++i;
 	}
 
-	s.setValue("recent_files", recent);
+	qs.endArray();
 }
 
-void mos_remove_recent_file(const QString& filepath)
+void Manager::addRecentFile(const QString& filePath, const QImage& image)
 {
-	QSettings s;
+	QSettings qs;
+	int i = 0;
 
-	QStringList recent = s.value("recent_files").toStringList();
-	recent.removeAll(filepath);
+	imageFilesMru_.push(filePath, image);
 
-	s.setValue("recent_files", recent);
+	qs.beginWriteArray("recent_files");
+
+	for (const auto& entry : imageFilesMru_)
+	{
+		qs.setArrayIndex(i);
+
+		QBuffer thumbnail;
+
+		thumbnail.open(QIODevice::WriteOnly);
+		entry.thumbnail().save(&thumbnail, "PNG");
+
+		qs.setValue("path", entry.filePath());
+		qs.setValue("thumbnail", thumbnail.data().toBase64());
+
+		++i;
+	}
+
+	qs.endArray();
 }
 
-QString mos_get_preview_background_color_name()
+void Manager::clearRecentFiles()
 {
-	return QSettings().value("preview_background").toString();
+	QSettings qs;
+
+	imageFilesMru_.clear();
+
+	qs.beginWriteArray("recent_files");
+	qs.endArray();
 }
 
-void mos_set_preview_background_color_name(const QString& colorName)
-{
-	QSettings().setValue("preview_background", colorName);
-}
-
-QSize mos_get_main_window_size()
-{
-	return QSettings().value("mainwindow_size").toSize();
-}
-
-void mos_set_main_window_size(const QSize& size)
-{
-	QSettings().setValue("mainwindow_size", size);
-}
+} // end namespace MosConfig

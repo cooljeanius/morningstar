@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Wespal
+GenericName=Wesnoth Asset Recoloring Tool
+Comment=A Wesnoth graphical assets team-coloring/recoloring tool.
+Icon=wespal
+Exec=wespal
+Categories=Graphics;2DGraphics;RasterGraphics;Qt;X-KDE-More;

@@ -1,30 +1,31 @@
-//
-// codename Morning Star
-// src/color_range.hpp - Recoloring mechanism (interface)
-//
-// Copyright (C) 2003 - 2008 by the Battle for Wesnoth Project <www.wesnoth.org>
-// Copyright (C) 2010 - 2019 by Iris Morelle <shadowm2006@gmail.com>
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-//
+/*
+ * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
+ *
+ * Copyright (C) 2003 - 2024 by The Battle for Wesnoth Project <www.wesnoth.org>
+ * Copyright (C) 2010 - 2024 by Iris Morelle <iris@irydacea.me>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #pragma once
 
-#include <QColor>
-#include <QMap>
+#include "colortypes.hpp"
+
 #include <QString>
+
+class QImage;
 
 /**
  * A color range definition is made of four reference RGB colors, used
@@ -45,98 +46,284 @@
  * In this implementation, the fourth reference color is unsupported as
  * it is not required for wesnoth-tc's functionality.
  */
-class color_range
+class ColorRange
 {
 public:
 	/**
-	 * Copy constructor.
-	 */
-	color_range(const color_range& o)
-			: mid_(o.mid_)
-			, max_(o.max_)
-			, min_(o.min_)
-	{}
-
-	/**
-	 * Constructor, which expects three reference RGB colors.
+	 * Constructor, which expects four reference RGB colors.
+	 *
 	 * @param mid Average color shade.
 	 * @param max Maximum (highlight) color shade
 	 * @param min Minimum color shade
+	 * @param rep High-contrast icon color
 	 */
-	color_range(
-		QRgb mid,
-		QRgb max = 0x00FFFFFF,
-		QRgb min = 0x00000000)
-			: mid_(mid)
-			, max_(max)
-			, min_(min)
-	{}
-
-	/** Default constructor. */
-	color_range() : mid_(0x00808080), max_(0x00FFFFFF), min_(0x00000000)
-	{}
-
-	/** Average color shade. */
-	QRgb mid() const{ return mid_; }
-	/** Maximum color shade. */
-	QRgb max() const{ return max_; }
-	/** Minimum color shade. */
-	QRgb min() const{ return min_; }
-
-	/** Sets the average color shade. */
-	void setMid(QRgb mid) { mid_ = mid; }
-	/** Sets the maximum color shade. */
-	void setMax(QRgb max) { max_ = max; }
-	/** Sets the minimum color shade. */
-	void setMin(QRgb min) { min_ = min; }
-
-	bool operator<(const color_range& b) const
+	ColorRange(QRgb mid = 0x808080,
+			   QRgb max = 0xFFFFFF,
+			   QRgb min = 0x000000,
+			   QRgb rep = 0x808080)
+		: mid_(mid)
+		, max_(max)
+		, min_(min)
+		, rep_(rep)
 	{
-		if(mid_ != b.mid()) {
-			return(mid_ < b.mid());
-		}
-		if(max_ != b.max()) {
-			return(max_ < b.max());
-		}
-		return(min_ < b.min());
 	}
 
-	bool operator==(const color_range& b) const
+	/**
+	 * Average color shade.
+	 */
+	QRgb mid() const
 	{
-		return(mid_ == b.mid() && max_ == b.max() && min_ == b.min());
+		return mid_;
 	}
 
-	color_range& operator=(const color_range& o)
+	/**
+	 * Sets the average color shade.
+	 */
+	void setMid(QRgb mid)
 	{
-		if(&o != this) {
-			mid_ = o.mid_;
-			max_ = o.max_;
-			min_ = o.min_;
-		}
-
-		return *this;
+		mid_ = mid;
 	}
+
+	/**
+	 * Maximum color shade.
+	 */
+	QRgb max() const
+	{
+		return max_;
+	}
+
+	/**
+	 * Sets the maximum color shade.
+	 */
+	void setMax(QRgb max)
+	{
+		max_ = max;
+	}
+
+	/**
+	 * Minimum color shade.
+	 */
+	QRgb min() const
+	{
+		return min_;
+	}
+
+	/**
+	 * Sets the minimum color shade.
+	 */
+	void setMin(QRgb min)
+	{
+		min_ = min;
+	}
+
+	/**
+	 * High-contrast icon color.
+	 */
+	QRgb rep() const
+	{
+		return rep_;
+	}
+
+	/**
+	 * Sets the high-contrast icon color.
+	 */
+	void setRep(QRgb rep)
+	{
+		rep_ = rep;
+	}
+
+	/**
+	 * Transforms a source palette using this color_range object.
+	 *
+	 * @param palette Source palette.
+	 *
+	 * @return A color map, where the keys are source palette items, and the
+	 *         values mapped to them are the result of applying a color range
+	 *         transform to them.
+	 */
+	ColorMap applyToPalette(const ColorList& palette) const;
 
 private:
-	QRgb mid_ , max_ , min_;
+	QRgb mid_ , max_ , min_, rep_;
 };
 
-typedef QMap<QRgb, QRgb> rc_map;
+inline bool operator<(const ColorRange& a, const ColorRange& b)
+{
+	if (a.mid() != b.mid())
+		return a.mid() < b.mid();
+	if (a.max() != b.max())
+		return a.max() < b.max();
+	return a.min() < b.min();
+}
+
+inline bool operator==(const ColorRange& a, const ColorRange& b)
+{
+	return a.mid() == b.mid() &&
+		   a.max() == b.max() &&
+		   a.min() == b.min();
+}
 
 /**
  * Converts a source palette using the specified color_range object.
  * This holds the main interface for range-based recoloring.
- * @param new_rgb Specifies parameters for the conversion.
- * @param old_rgb Source palette.
- * @return A STL map of colors, with the keys being source palette elements, and the values
- *         are the result of applying the color range conversion on it.
+ *
+ * @param new_rgb      Specifies parameters for the conversion.
+ *
+ * @param old_rgb      Source palette.
+ *
+ * @return A color map, where the keys are source palette items, and the
+ *         values mapped to them are the result of applying a color range
+ *         transform to them.
  */
-rc_map recolor_range(const color_range& new_rgb, const QList<QRgb>& old_rgb);
+ColorMap applyColorRange(const ColorRange& colorRange,
+						 const ColorList& palette);
 
-rc_map recolor_palettes(const QList<QRgb>& key, const QList<QRgb>& new_values);
+/**
+ * Generates a color map from two palettes.
+ *
+ * @param srcPalette   Source palette.
+ *
+ * @param newPalette   New palette.
+ *
+ * @return A color map, where the keys are source palette items, and the
+ *         values mapped to them are taken from their analogous index in th
+ *         new palette.
+ *
+ * @note If srcPalette and newPalette differ in size, the operation uses at
+ *       most the number of colors in the smallest palette.
+ */
+ColorMap generateColorMap(const ColorList& srcPalette,
+						  const ColorList& newPalette);
 
-QString generate_color_range_wml(const QString& name, const color_range& range);
+/**
+ * Generates Wesnoth Markup from a color range object.
+ *
+ * @param name         Color range name to be used for its WML id and
+ *                     human-friendly name in English.
+ *
+ * @param range        Color range object.
+ *
+ * @return A string containing WML code including a [color_range] tag.
+ */
+QString wmlFromColorRange(const QString& name,
+						  const ColorRange& range);
 
-QString generate_color_palette_wml(const QString& name, const QList<QRgb>& palette);
+/**
+ * Generates Wesnoth Markup from a color list.
+ *
+ * @param name         Color palette name to be used for its WML id and
+ *                     human-friendly name in English.
+ *
+ * @param palette      Color palette object.
+ *
+ * @return A string containing WML code including a [color_palette] tag.
+ */
+QString wmlFromColorList(const QString& name,
+						 const ColorList& palette);
 
-// kate: indent-mode normal; encoding utf-8; space-indent off; indent-width 4;
+/**
+ * Extracts a set of unique colors in an image.
+ *
+ * @param input        Input image.
+ *
+ * @return An ordered set of unique colors found in the input, with alpha
+ *         values set to zero.
+ */
+ColorSet uniqueColorsFromImage(const QImage& input);
+
+/**
+ * Recolors a QImage using the specified color map.
+ *
+ * The color map provided may be obtained by e.g. calling ColorRange::apply()
+ * on an appropriate palette.
+ *
+ * @param input        Input image.
+ *
+ * @param colorMap     A color map to use for transforming the image.
+ *
+ * @return A recolored image, always in ARGB32 format regardless of the input
+ *         format.
+ */
+QImage recolorImage(const QImage& input,
+					const ColorMap& colorMap);
+
+/**
+ * Tints a QImage with the specified color.
+ *
+ * @param input        Input image.
+ *
+ * @param color        Blending color. The alpha channel is ignored.
+ *
+ * @param blendFactor  Blending factor, ranging from 0.0 to 1.0. Values
+ *                     outside the range will be bound to the closest legal
+ *                     value.
+ *
+ * @return A recolored image, always in ARGB32 format regardless of the input
+ *         format.
+ */
+QImage colorBlendImage(const QImage& input,
+					   const QColor& color,
+					   qreal blendFactor);
+
+/**
+ * Applies a color shift effect on a QImage.
+ *
+ * @param input        Input image.
+ *
+ * @param redShift     Shift value for the red channel between -255 and 255.
+ *
+ * @param greenShift   Shift value for the green channel between -255 and 255.
+ *
+ * @param blueShift    Shift value for the blue channel between -255 and 255.
+ *
+ * @return A recolored image, always in ARGB32 format regardless of the input
+ *         format.
+ */
+QImage colorShiftImage(const QImage& input,
+					   int redShift,
+					   int greenShift,
+					   int blueShift);
+
+namespace MosIO {
+
+/**
+ * Writes a QImage to disk as a PNG file.
+ *
+ * @param input        Input image (see notes).
+ * @param fileName     Image file name.
+ * @param vanityPlate  Whether to include a tEXt chunk for a Software comment
+ *                     including the software name and version used to save
+ *                     the PNG file.
+ *
+ * @note @a input is assumed to be in ARGB32 format, although this is not
+ *       a particularly significant assumption anyway. More importantly, this
+ *       function may MODIFY its input to ensure that its color space
+ *       configuration is correct for the intended output format.
+ */
+bool writePng(QImage& input, const QString& fileName, bool vanityPlate = true);
+
+/**
+ * Writes a QImage to a string as Base64 data containing a valid PNG file.
+ *
+ * @param input        Input image (see notes).
+ * @param dataUri      Formats the buffer as an RFC 2397 data URI. If false
+ *                     (the default) a naked PNG file will be written instead.
+ *
+ * @note @a input is assumed to be in ARGB32 format, although this is not
+ *       a particularly significant assumption anyway. More importantly, this
+ *       function may MODIFY its input to ensure that its color space
+ *       configuration is correct for the intended output format.
+ */
+QString writeBase64Png(QImage& input, bool dataUri = false);
+
+/**
+ * Writes a palette to disk in GIMP palette (.gpl) format.
+ *
+ * @param palette      Input palette.
+ * @param fileName     Palette file name.
+ */
+bool writeGimpPalette(const ColorList& palette,
+					  const QString& fileName,
+					  const QString& paletteName);
+
+} // end namespace MosIO

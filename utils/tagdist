@@ -1,2 +1,0 @@
-#!/bin/sh
-git archive --format=tar --prefix=wesnoth-rcx-$1/ $1 | bzip2 > wesnoth-rcx-$1.tar.bz2

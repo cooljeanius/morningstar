@@ -1,65 +1,157 @@
-//
-// codename Morning Star
-//
-// Copyright (C) 2008 - 2019 by Iris Morelle <shadowm2006@gmail.com>
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-//
+/*
+ * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
+ *
+ * Copyright (C) 2008 - 2024 by Iris Morelle <iris@irydacea.me>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #pragma once
 
 #include "wesnothrc.hpp"
 
-#include <QAbstractButton>
-#include <QDropEvent>
-#include <QDragEnterEvent>
-#include <QFileInfo>
+#include "appconfig.hpp"
+
+#include <QClipboard>
 #include <QMainWindow>
-#include <QScrollArea>
-#include <QStringList>
 
 namespace Ui {
     class MainWindow;
 }
 
+class QAbstractButton;
+class QAbstractScrollArea;
+class QButtonGroup;
+class QDragEnterEvent;
+class QDropEvent;
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+	MainWindow(QWidget* parent = nullptr);
+	~MainWindow();
 
-	bool initial_open(const QString& initial_file);
+	/**
+	 * Opens the specified file, or prompts the user to select one.
+	 */
+	void openFile(const QString& fileName = {});
 
-	QStringList do_run_jobs(QMap<QString, rc_map> &jobs);
+	QStringList doRunJobs(const QMap<QString, ColorMap>& jobs);
 
 protected:
-    void changeEvent(QEvent *e);
-	void closeEvent(QCloseEvent *e);
-	void dragEnterEvent(QDragEnterEvent *e);
-	void dropEvent(QDropEvent *e);
-	void mouseMoveEvent(QMouseEvent *event);
-	void mousePressEvent(QMouseEvent *event);
-	void keyPressEvent(QKeyEvent *event);
-	void wheelEvent(QWheelEvent *event);
+	virtual void changeEvent(QEvent* event) override;
+
+	virtual void closeEvent(QCloseEvent* event) override;
+
+	virtual void wheelEvent(QWheelEvent* event) override;
+
+	virtual void mousePressEvent(QMouseEvent* event) override;
+	virtual void mouseMoveEvent(QMouseEvent* event) override;
+	virtual void mouseReleaseEvent(QMouseEvent* event) override;
+
+	virtual void dragEnterEvent(QDragEnterEvent* event) override;
+	virtual void dropEvent(QDropEvent* event) override;
 
 private:
-	QMap< QString, color_range > color_ranges_;
-	QMap< QString, QList<QRgb> > palettes_;
+	using ViewMode = MosConfig::ImageViewMode;
 
-	QMap< QString, color_range > user_color_ranges_;
-	QMap< QString, QList<QRgb> > user_palettes_;
+	enum ImageOrigin
+	{
+		ImageOriginFile,
+		ImageOriginDrop,
+		ImageOriginClipboard,
+	};
+
+	enum ColorShiftChannel
+	{
+		ColorShiftRed,
+		ColorShiftGreen,
+		ColorShiftBlue,
+	};
+
+	enum RcMode
+	{
+		RcColorRange,
+		RcPaletteSwap,
+		RcColorBlend,
+		RcColorShift,
+	};
+
+	enum ZoomDirection
+	{
+		ZoomIn,
+		ZoomOut,
+	};
+
+	// These can only be values that look good with NN scaling
+	static constexpr std::array zoomFactors_ = {
+		0.5,
+		1.0,
+		2.0,
+		4.0,
+		8.0,
+		16.0,
+	};
+
+	Ui::MainWindow* ui;
+
+	QMap<QString, ColorRange> colorRanges_;
+	QMap<QString, ColorList> palettes_;
+
+	QMap<QString, ColorRange> userColorRanges_;
+	QMap<QString, ColorList> userPalettes_;
+
+	QString imagePath_;
+	QString searchDirPath_;
+	QString saveDirPath_;
+
+	QImage originalImage_;
+	QImage transformedImage_;
+
+	ViewMode viewMode_;
+	RcMode   rcMode_;
+
+	qreal zoom_;
+
+	QColor blendColor_;
+	qreal blendFactor_;
+
+	int colorShiftRed_;
+	int colorShiftGreen_;
+	int colorShiftBlue_;
+
+	bool ignoreDrops_;
+	bool dragUseRecolored_;
+	bool dragStart_;
+	QPointF dragStartPos_;
+
+	bool panStart_;
+	QPointF panStartPos_;
+
+	QList<QAction*> recentFileActions_;
+	QList<QAction*> zoomActions_;
+	QList<QAction*> viewModeActions_;
+
+	QButtonGroup* compositeShortcutsGroup_;
+
+	QString supportedImageFileFormats_;
+
+	bool hasImage() const
+	{
+		return !originalImage_.isNull();
+	}
 
 	/**
 	 * Merges user definitions with built-ins.
@@ -72,76 +164,52 @@ private:
 	/** Process definitions, updating UI elements accordingly. */
 	void processRcDefinitions();
 
-	void insertRangeListItem(const QString& id, const QString& display_name);
+	void insertRangeListItem(const QString& id, const QString& display_name, const ColorRange& colorRange);
 
-	Ui::MainWindow *ui;
+	void updateRecentFilesMenu();
 
-	QString img_path_;
+	void updateWindowTitle(bool hasImage,
+						   const QString& filename = {},
+						   ImageOrigin origin = ImageOriginFile);
 
-	QImage img_original_;
-	QImage img_transview_;
+	void doSaveFile();
+	void doCloseFile();
+	void doReloadFile();
+	void doAboutDialog();
 
-	qreal zoom_;
-	bool ignore_drops_;
-	bool drag_use_rc_;
-	bool drag_start_;
-	QPoint drag_start_pos_;
+	void setViewMode(ViewMode newViewMode);
+	void setRcMode(RcMode rcMode);
+	void enableWorkArea(bool enable);
 
-	QVector<QAction*> recent_file_acts_;
+	bool confirmFileOverwrite(const QStringList& paths);
 
-	QList<qreal> zoom_factors_;
+	QStringList doSaveCurrentTransform(const QString& dirPath, const QString& suffix);
 
-	void update_recent_files_menu();
+	QStringList doSaveColorRanges(const QString& base);
+	QStringList doSaveSingleRecolor(const QString& dirPath);
 
-	void update_window_title(const QString& open_filename) {
-		QString display_string;
+	QStringList doSaveColorBlend(const QString& dirPath);
+	QStringList doSaveColorShift(const QString& dirPath);
 
-		if(open_filename.isEmpty()) {
-			this->setWindowFilePath("");
-			display_string = tr("Dropped file");
-		} else {
-			this->setWindowFilePath(open_filename);
-			display_string = QFileInfo(open_filename).fileName();
-		}
+	void refreshPreviews(bool skipRerender = false);
 
-		this->setWindowTitle(display_string + QString().fromUtf8(" \342\200\224 ") + tr("Wesnoth RCX"));
-	}
+	QString currentPaletteName(bool paletteSwitchMode = false) const;
+	ColorList currentPalette(bool paletteSwitchMode = false) const;
 
-	void toggle_page1(bool newstate);
-	void toggle_page2(bool newstate);
+	void adjustZoom(ZoomDirection direction);
 
-	void do_save();
-	void do_close();
-	void do_open(const QString& initial_file = QString());
-	void do_reload();
-	void do_about();
+	void setPreviewBackgroundColor(const QString& colorName);
 
-	bool confirm_existing_files(const QStringList& paths);
+	void resetPreviewLayout(QAbstractScrollArea* scrollArea,
+							QWidget* previewWidget);
 
-	QStringList do_save_color_ranges(QString& base);
-	QStringList do_save_single_recolor(QString& base);
+	void doCustomPreviewBgSelect();
+	void updateCustomPreviewBgIcon();
 
-	void refresh_previews();
-
-	QString current_pal_name(bool palette_switch_mode = false) const;
-	QList<QRgb> current_pal_data(bool palette_switch_mode = false) const;
-
-	QString supported_file_patterns() const;
-
-	void update_zoom_buttons();
-
-	void setPreviewBackgroundColor(const QString &colorName);
-
-	void centerScrollArea(QScrollArea* scrollArea);
-
-	void do_custom_preview_color_option();
-	void do_custom_preview_color_icon();
+	void updateColorButton(QAbstractButton* button, const QColor& color);
 
 private slots:
 	void on_action_Reload_triggered();
-	void on_actionColor_ranges_triggered();
-	void on_tbZoomOut_clicked();
-	void on_tbZoomIn_clicked();
 	void on_listRanges_currentRowChanged(int currentRow);
 	void on_cbxNewPal_currentIndexChanged(int index);
 	void on_cbxKeyPal_currentIndexChanged(int index);
@@ -152,9 +220,37 @@ private slots:
 	void on_actionAbout_Morning_Star_triggered();
 	void on_radPal_clicked();
 	void on_radRc_clicked();
+	void on_radBlend_clicked();
+	void on_radShift_clicked();
 	void handleRecent();
 	void on_zoomSlider_valueChanged(int value);
-	void on_action_Palettes_triggered();
+	void on_zoomSlider_sliderMoved(int value);
 
 	void handlePreviewBgOption(bool checked);
+	void on_cmdOpen_clicked();
+	void on_action_ClearMru_triggered();
+	void on_action_Close_triggered();
+	void on_cbxViewMode_currentIndexChanged(int index);
+	void on_viewSlider_valueChanged(int value);
+	void on_viewSlider_sliderMoved(int value);
+	void on_actionZoomIn_triggered();
+	void on_actionZoomOut_triggered();
+	void on_actionAppSettings_triggered();
+	void on_compositeOriginalOnlyToggle_toggled(bool checked);
+	void on_compositeRcOnlyToggle_toggled(bool checked);
+	void on_actionBase64_triggered();
+	void on_cmdGenerateWml_clicked();
+
+	void onColorBlendFactorChanged(int value);
+	void onColorBlendLineEditChanged(const QString& value);
+	void onColorBlendButtonClicked();
+
+	void onColorShiftValueChanged(ColorShiftChannel ch, int value);
+
+	void onRcSelectButtonClicked(bool check);
+	void on_actionCopy_triggered();
+	void on_actionCopyOriginal_triggered();
+	void on_actionPaste_triggered();
+
+	void onClipboardChanged(QClipboard::Mode mode);
 };
