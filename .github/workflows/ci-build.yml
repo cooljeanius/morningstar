@@ -1,10 +1,11 @@
+---
 name: CI
 
 on:
   push:
-    branches: [ "master", "ci-tests", "more-image-plugins" ]
+    branches: ["master", "ci-tests", "more-image-plugins"]
   pull_request:
-    branches: [ "master", "ci-tests", "more-image-plugins" ]
+    branches: ["master", "ci-tests", "more-image-plugins"]
 
 jobs:
   build:
