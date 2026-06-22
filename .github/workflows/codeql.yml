@@ -20,6 +20,7 @@ on:
       - imgbot
       - dependabot/*
       - autofix/alert-*
+      - cherrypicks
   pull_request:
     branches:
       - master
@@ -27,6 +28,7 @@ on:
       - imgbot
       - dependabot/*
       - autofix/alert-*
+      - cherrypicks
   schedule:
     - cron: '39 19 * * 3'
 
