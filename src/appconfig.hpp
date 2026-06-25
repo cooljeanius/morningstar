@@ -1,7 +1,7 @@
 /*
  * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
  *
- * Copyright (C) 2010 - 2024 by Iris Morelle <iris@irydacea.me>
+ * Copyright (C) 2010 - 2025 by Iris Morelle <iris@irydacea.me>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,18 @@
 
 #include <QSize>
 
+// We currently do not support setting the app color scheme on platforms other
+// than macOS due to lack of support on other platforms. In particular, on
+// Windows, app color scheme hint support requires using the icky Windows 11
+// style engine, which we INTENTIONALLY do not use.
+//
+// TODO: Potentially work around these limitations by using Fusion whenever
+// the color scheme hint is unsupported and the app color scheme is not set to
+// the OS default, then set our own color theme.
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0) && (defined(Q_OS_MACOS) || defined(Q_OS_WINDOWS))
+#	define WESPAL_UI_SUPPORTS_APP_COLOR_SCHEME
+#endif
+
 namespace MosConfig {
 
 Q_NAMESPACE
@@ -39,6 +51,15 @@ enum ImageViewMode
 };
 
 Q_ENUM_NS(ImageViewMode)
+
+enum AppColorScheme
+{
+	AppColorSchemeOSDefault,
+	AppColorSchemeOSDark = -1,
+	AppColorSchemeOSLight = -2,
+};
+
+Q_ENUM_NS(AppColorScheme)
 
 class Manager
 {
@@ -116,6 +137,19 @@ public:
 	//void addCustomPalette(const QString& name, const ColorList& palette);
 
 	//void deleteCustomPalette(const QString& palette);
+
+	/**
+	 * Retrieves whether files should be automatically reloaded if modified on disk.
+	 */
+	bool autoReload() const
+	{
+		return autoReload_;
+	}
+
+	/**
+	 * Sets whether to automatically reload modified files on disk.
+	 */
+	void setAutoReload(bool autoReload);
 
 	/**
 	 * Retrieves whether the main window size should be remembered.
@@ -202,6 +236,19 @@ public:
 	void setImageViewMode(ImageViewMode imageViewMode);
 
 	/**
+	 * Returns which OS color scheme should be used for the UI.
+	 */
+	AppColorScheme appColorScheme() const
+	{
+		return appColorScheme_;
+	}
+
+	/**
+	 * Sets the OS color scheme that should be used for the UI.
+	 */
+	void setAppColorScheme(AppColorScheme scheme);
+
+	/**
 	 * Returns whether PNG writer functions should include the Software comment.
 	 */
 	bool pngVanityPlate() const
@@ -217,18 +264,33 @@ public:
 	 */
 	void setPngVanityPlate(bool enable);
 
+	/**
+	 * Applies changes to the UI color scheme.
+	 *
+	 * This function does nothing if changing the UI color scheme is
+	 * unsupported by the target platform.
+	 *
+	 * @note You do not ever need to call this yourself unless you need to
+	 * handle PaletteChange events, in which case this guarantees that the
+	 * correct style engine is selected if a particular one is needed for
+	 * platform support.
+	 */
+	void applyAppColorScheme();
+
 private:
 	Manager();
 
 	MruList imageFilesMru_;
 	QMap<QString, ColorRange> customColorRanges_;
 	QMap<QString, ColorList> customPalettes_;
+	bool autoReload_;
 	bool rememberMainWindowSize_;
 	QSize mainWindowSize_;
 	qreal defaultZoom_;
 	QString previewBackgroundColor_;
 	bool rememberImageViewMode_;
 	ImageViewMode imageViewMode_;
+	AppColorScheme appColorScheme_;
 	bool pngVanityPlate_;
 };
 

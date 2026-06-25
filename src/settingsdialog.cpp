@@ -1,7 +1,7 @@
 /*
  * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
  *
- * Copyright (C) 2011 - 2024 by Iris Morelle <iris@irydacea.me>
+ * Copyright (C) 2011 - 2025 by Iris Morelle <iris@irydacea.me>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -126,6 +126,15 @@ void SettingsDialog::onDialogAccepted()
 	auto& config = MosCurrentConfig();
 
 	qreal defaultZoom = ui->defaultZoomList->currentData().toReal();
+
+#ifdef WESPAL_UI_SUPPORTS_APP_COLOR_SCHEME
+	if (ui->appearanceDefaultRadio->isChecked())
+		config.setAppColorScheme(MosConfig::AppColorSchemeOSDefault);
+	else if (ui->appearanceLightRadio->isChecked())
+		config.setAppColorScheme(MosConfig::AppColorSchemeOSLight);
+	else if (ui->appearanceDarkRadio->isChecked())
+		config.setAppColorScheme(MosConfig::AppColorSchemeOSDark);
+#endif
 
 	config.setRememberMainWindowSize(ui->rememberWindowSizeCheckbox->isChecked());
 	config.setRememberImageViewMode(ui->rememberImageViewModeCheckbox->isChecked());
@@ -297,11 +306,27 @@ void SettingsDialog::initGeneralPage()
 	ui->rememberWindowSizeCheckbox->setChecked(config.rememberMainWindowSize());
 	ui->rememberImageViewModeCheckbox->setChecked(config.rememberImageViewMode());
 
+#ifdef WESPAL_UI_SUPPORTS_APP_COLOR_SCHEME
+	switch (config.appColorScheme()) {
+		case MosConfig::AppColorSchemeOSDark:
+			ui->appearanceDarkRadio->setChecked(true);
+			break;
+		case MosConfig::AppColorSchemeOSLight:
+			ui->appearanceLightRadio->setChecked(true);
+			break;
+		default:
+			ui->appearanceDefaultRadio->setChecked(true);
+			break;
+	}
+#else
+	ui->appearanceGroup->setVisible(false);
+#endif
+
 	auto defaultZoom = config.defaultZoom();
 
 	QString zoomLabelFmt{"%1%"};
 
-	for (auto zoom : zoomValues_)
+	for (auto zoom : std::as_const(zoomValues_))
 	{
 		ui->defaultZoomList->addItem(zoomLabelFmt.arg(qRound(zoom * 100)), zoom);
 

@@ -1,7 +1,7 @@
 /*
  * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
  *
- * Copyright (C) 2008 - 2024 by Iris Morelle <iris@irydacea.me>
+ * Copyright (C) 2008 - 2025 by Iris Morelle <iris@irydacea.me>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
 {
 #if defined(Q_OS_WINDOWS) && QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
 	// Avoid the icky Windows 11 style being enabled by default
+	// NOTE: applyAppColorScheme() may override this again if needed for dark
+	// mode support on Windows.
 	QApplication::setStyle("WindowsVista");
 #endif
 

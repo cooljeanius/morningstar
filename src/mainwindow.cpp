@@ -1,7 +1,7 @@
 /*
  * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
  *
- * Copyright (C) 2008 - 2024 by Iris Morelle <iris@irydacea.me>
+ * Copyright (C) 2008 - 2025 by Iris Morelle <iris@irydacea.me>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QFileDialog>
+#include <QFileSystemWatcher>
 #include <QPainter>
 #include <QMessageBox>
 #include <QMimeData>
@@ -43,6 +44,13 @@
 #include <QSplitter>
 #include <QStringBuilder>
 #include <QWhatsThis>
+
+#if defined(WESPAL_UI_SUPPORTS_APP_COLOR_SCHEME) && defined(Q_OS_WINDOWS)
+#	define WIN32_LEAN_AND_MEAN
+#	define NOMINMAX
+#	define NOGDI
+#	include <windows.h>
+#endif
 
 namespace {
 
@@ -80,6 +88,8 @@ MainWindow::MainWindow(QWidget* parent)
 
 	, originalImage_()
 	, transformedImage_()
+
+	, watcher_(new QFileSystemWatcher(this))
 
 	, viewMode_()
 	, rcMode_()
@@ -223,6 +233,12 @@ MainWindow::MainWindow(QWidget* parent)
 	auto* saveButton = ui->buttonBox->button(QDialogButtonBox::Save);
 
 	saveButton->setWhatsThis(tr("Saves the current recolor job."));
+
+	//
+	// Reload option
+	//
+
+	ui->actionAutomaticallyReload->setChecked(MosCurrentConfig().autoReload());
 
 	//
 	// MRU menu & list widget
@@ -510,6 +526,9 @@ MainWindow::MainWindow(QWidget* parent)
 			this, SLOT(onClipboardChanged(QClipboard::Mode)));
 	onClipboardChanged(QClipboard::Clipboard); // Need to do an initial poll
 
+	connect(watcher_, SIGNAL(fileChanged(const QString&)), this, SLOT(onWatchedFileChanged(const QString&)));
+	connect(watcher_, SIGNAL(directoryChanged(const QString&)), this, SLOT(onWatchedFileChanged(const QString&)));
+
 	ui->radRc->setChecked(true);
 	setRcMode(RcColorRange);
 	setViewMode(viewMode);
@@ -518,7 +537,7 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+	delete ui;
 }
 
 void MainWindow::updateWindowTitle(bool hasImage,
@@ -743,7 +762,7 @@ void MainWindow::changeEvent(QEvent* event)
 			break;
 		default:
 			break;
-    }
+	}
 }
 
 void MainWindow::closeEvent(QCloseEvent*)
@@ -949,9 +968,32 @@ void MainWindow::dropEvent(QDropEvent* event)
 		updateWindowTitle(true, {}, ImageOriginDrop);
 	}
 
-	refreshPreviews();
+	refreshPreviews(false, false);
 	enableWorkArea(true);
 }
+
+#if defined(WESPAL_UI_SUPPORTS_APP_COLOR_SCHEME) && defined(Q_OS_WINDOWS)
+bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result)
+{
+	Q_UNUSED(eventType);
+	Q_UNUSED(result);
+
+	// Nothing to do here if not using automatic color scheme selection
+	if (MosCurrentConfig().appColorScheme() != MosConfig::AppColorSchemeOSDefault)
+		return false;
+
+	auto winMsg = static_cast<MSG*>(message);
+	if (winMsg->message == WM_SETTINGCHANGE &&
+		lstrcmp(L"ImmersiveColorSet", reinterpret_cast<LPCWSTR>(winMsg->lParam)) == 0)
+	{
+		// Ensure the correct style engine is selected as required to support
+		// the new color scheme if it has changed
+		MosCurrentConfig().applyAppColorScheme();
+	}
+
+	return false;
+}
+#endif
 
 void MainWindow::on_radRc_clicked()
 {
@@ -1059,6 +1101,10 @@ void MainWindow::openFile(const QString& fileName)
 		return;
 	}
 
+	// Stop monitoring anything we were monitoring before while we set things
+	// up again
+	stopWatchingFiles();
+
 	imagePath_ = selectedPath;
 
 	// Persist the parent dir path as the search path for future file
@@ -1072,16 +1118,21 @@ void MainWindow::openFile(const QString& fileName)
 	MosCurrentConfig().addRecentFile(imagePath_, originalImage_);
 	updateRecentFilesMenu();
 	updateWindowTitle(true, imagePath_);
-	refreshPreviews();
+	refreshPreviews(false, false);
 
 	enableWorkArea(true);
+
+	// Set up file monitoring again
+	refreshWatcher();
 }
 
-void MainWindow::doReloadFile()
+void MainWindow::doReloadFile(bool silent)
 {
 	QImage img{imagePath_};
 	if (img.isNull()) {
-		MosUi::error(this, tr("Could not reload %1.").arg(imagePath_));
+		if (!silent) {
+			MosUi::error(this, tr("Could not reload %1.").arg(imagePath_));
+		}
 		return;
 	}
 
@@ -1091,10 +1142,27 @@ void MainWindow::doReloadFile()
 	refreshPreviews();
 }
 
-void MainWindow::refreshPreviews(bool skipRerender)
+void MainWindow::refreshPreviews(bool skipRerender, bool keepPos)
 {
 	if (!hasImage() || signalsBlocked())
 		return;
+
+	QPointF previewPos{50.0, 50.0};
+
+	if (keepPos) {
+		switch (viewMode_)
+		{
+			case MosConfig::ImageViewSwipe:
+			case MosConfig::ImageViewOnionSkin:
+				previewPos = currentScrollPercent(ui->previewCompositeContainer);
+				break;
+			default:
+				// In reality we only need one container's position, as the other
+				// one will be automatically adjusted in tandem with whichever we
+				// choose to modify next
+				previewPos = currentScrollPercent(ui->previewOriginalContainer);
+		}
+	}
 
 	if (!skipRerender) {
 		switch (rcMode_)
@@ -1134,7 +1202,7 @@ void MainWindow::refreshPreviews(bool skipRerender)
 		case MosConfig::ImageViewSwipe:
 		case MosConfig::ImageViewOnionSkin:
 			ui->previewComposite->setImages(originalImage_, transformedImage_);
-			resetPreviewLayout(ui->previewCompositeContainer, ui->previewComposite);
+			resetPreviewLayout(ui->previewCompositeContainer, ui->previewComposite, previewPos);
 
 			ui->previewOriginal->clear();
 			ui->previewRc->clear();
@@ -1145,13 +1213,37 @@ void MainWindow::refreshPreviews(bool skipRerender)
 
 			ui->previewOriginal->setImage(originalImage_);
 			ui->previewRc->setImage(transformedImage_);
-			resetPreviewLayout(ui->previewOriginalContainer, ui->previewOriginal);
-			resetPreviewLayout(ui->previewRcContainer, ui->previewRc);
+			resetPreviewLayout(ui->previewOriginalContainer, ui->previewOriginal, previewPos);
+			resetPreviewLayout(ui->previewRcContainer, ui->previewRc, previewPos);
 	}
 }
 
+QPointF MainWindow::currentScrollPercent(QAbstractScrollArea* scrollArea) const
+{
+	QPointF res{50.0, 50.0};
+
+	if (!scrollArea)
+		return res;
+
+	auto* hScroll = scrollArea->horizontalScrollBar();
+	auto* vScroll = scrollArea->verticalScrollBar();
+
+	// If the scrollbars are locked because the image hasn't been zoomed in
+	// enough to allow scrolling, pretend that they are set to the halfway
+	// point on the relevant axis. This prevents zooming in from scrolling the
+	// view to the top left corner of the image every time.
+
+	if (hScroll && hScroll->minimum() != hScroll->maximum())
+		res.setX(100.0 * hScroll->value() / hScroll->maximum());
+	if (vScroll && vScroll->minimum() != vScroll->maximum())
+		res.setY(100.0 * vScroll->value() / vScroll->maximum());
+
+	return res;
+}
+
 void MainWindow::resetPreviewLayout(QAbstractScrollArea* scrollArea,
-									QWidget* previewWidget)
+									QWidget* previewWidget,
+									QPointF scrollPercent)
 {
 	if (!scrollArea || !previewWidget)
 		return;
@@ -1164,8 +1256,11 @@ void MainWindow::resetPreviewLayout(QAbstractScrollArea* scrollArea,
 	auto* hScroll = scrollArea->horizontalScrollBar();
 	auto* vScroll = scrollArea->verticalScrollBar();
 
-	hScroll->setValue(hScroll->maximum() / 2);
-	vScroll->setValue(vScroll->maximum() / 2);
+	auto hPerc = qBound(0.0, scrollPercent.x(), 100.0);
+	auto vPerc = qBound(0.0, scrollPercent.y(), 100.0);
+
+	hScroll->setValue(hScroll->maximum() * hPerc / 100.0);
+	vScroll->setValue(vScroll->maximum() * vPerc / 100.0);
 }
 
 void MainWindow::doSaveFile()
@@ -1281,7 +1376,7 @@ void MainWindow::setViewMode(MainWindow::ViewMode newViewMode)
 	ui->cbxViewMode->setCurrentIndex(viewMode_);
 
 	// Update preview widgets if applicable
-	refreshPreviews(true);
+	refreshPreviews(true, false);
 }
 
 void MainWindow::setRcMode(MainWindow::RcMode newRcMode)
@@ -1326,6 +1421,7 @@ void MainWindow::setRcMode(MainWindow::RcMode newRcMode)
 	}
 
 	refreshPreviews();
+	updateSaveActions();
 }
 
 void MainWindow::enableWorkArea(bool enable)
@@ -1357,20 +1453,25 @@ void MainWindow::enableWorkArea(bool enable)
 		(widget->setEnabled(enable), ...);
 	}, elements);
 
-	for (auto* action : viewModeActions_) {
+	for (auto* action : std::as_const(viewModeActions_)) {
 		action->setEnabled(enable);
 	}
 
 	if (!enable) {
 		ui->staWorkAreaParent->setCurrentIndex(WorkAreaStartPage);
-	} else switch (viewMode_) {
-		case MosConfig::ImageViewSwipe:
-		case MosConfig::ImageViewOnionSkin:
-			ui->staWorkAreaParent->setCurrentIndex(WorkAreaCompositeRc);
-			break;
-		default:
-			ui->staWorkAreaParent->setCurrentIndex(WorkAreaSplitRc);
-			break;
+	} else {
+		switch (viewMode_)
+		{
+			case MosConfig::ImageViewSwipe:
+			case MosConfig::ImageViewOnionSkin:
+				ui->staWorkAreaParent->setCurrentIndex(WorkAreaCompositeRc);
+				break;
+			default:
+				ui->staWorkAreaParent->setCurrentIndex(WorkAreaSplitRc);
+				break;
+		}
+
+		updateSaveActions();
 	}
 
 	auto* closeButton = ui->buttonBox->button(QDialogButtonBox::Close);
@@ -1382,6 +1483,54 @@ void MainWindow::enableWorkArea(bool enable)
 		closeButton->setText(tr("Quit"));
 		closeButton->setWhatsThis(tr("Quits Wespal."));
 	}
+}
+
+void MainWindow::updateSaveActions()
+{
+	bool saveStatus = rcMode_ != RcColorRange;
+	// We need a selection if in RcColorRange mode
+	if (!saveStatus) {
+		for (int k = 0; k < ui->listRanges->count(); ++k)
+		{
+			QListWidgetItem* item = ui->listRanges->item(k);
+			Q_ASSERT(item);
+			if (item->checkState() == Qt::Checked) {
+				saveStatus = true;
+				break;
+			}
+		}
+	}
+
+	ui->action_Save->setEnabled(saveStatus);
+	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(saveStatus);
+}
+
+void MainWindow::refreshWatcher()
+{
+	stopWatchingFiles();
+
+	if (!MosCurrentConfig().autoReload()) {
+		return;
+	}
+
+	// Don't change the watchlist unnecessarily
+	const auto& watchList = watcher_->files();
+	if (watchList.length() == 1 && watchList.first() == imagePath_)
+		return;
+
+	watcher_->addPath(imagePath_);
+}
+
+void MainWindow::stopWatchingFiles()
+{
+	const auto& watchedDirs = watcher_->directories();
+	const auto& watchedFiles = watcher_->files();
+	// These checks are annoying but otherwise Qt pollutes stderr by whining
+	// "QFileSystemWatcher::removePaths: list is empty".
+	if (!watchedDirs.isEmpty())
+		watcher_->removePaths(watchedDirs);
+	if (!watchedFiles.isEmpty())
+		watcher_->removePaths(watchedFiles);
 }
 
 QString MainWindow::currentPaletteName(bool paletteSwitchMode) const
@@ -1551,6 +1700,11 @@ void MainWindow::on_listRanges_currentRowChanged(int /*currentRow*/)
 	refreshPreviews();
 }
 
+void MainWindow::on_listRanges_itemChanged(QListWidgetItem* /*item*/)
+{
+	updateSaveActions();
+}
+
 void MainWindow::on_zoomSlider_valueChanged(int value)
 {
 	qreal newZoom = zoomFactors_[qBound(0, value, int(zoomFactors_.size() - 1))];
@@ -1560,7 +1714,7 @@ void MainWindow::on_zoomSlider_valueChanged(int value)
 	zoom_ = newZoom;
 	refreshPreviews();
 
-	for (auto* action : zoomActions_)
+	for (auto* action : std::as_const(zoomActions_))
 	{
 		if (action->data() == value && !action->isChecked()) {
 			action->setChecked(true);
@@ -1624,15 +1778,58 @@ void MainWindow::updateCustomPreviewBgIcon()
 
 void MainWindow::setPreviewBackgroundColor(const QString& colorName)
 {
-	if (!colorName.isEmpty()) {
-		const QString ss = "* { background-color: " % colorName % "; }";
-		ui->previewOriginalContainer->viewport()->setStyleSheet(ss);
-		ui->previewRcContainer->viewport()->setStyleSheet(ss);
-		ui->previewCompositeContainer->viewport()->setStyleSheet(ss);
-	} else {
-		ui->previewOriginalContainer->viewport()->setStyleSheet({});
-		ui->previewRcContainer->viewport()->setStyleSheet({});
-		ui->previewCompositeContainer->viewport()->setStyleSheet({});
+	auto containers = std::make_tuple(
+		ui->previewOriginalContainer,
+		ui->previewRcContainer,
+		ui->previewCompositeContainer
+	);
+
+	// This is a complete MESS. Supporting this in a cross-platform fashion
+	// right now is next to impossible due to the way we abuse QScrollArea.
+	// We really need to use our own custom widget with separate scrollbars so
+	// we can style it independently without any kluges. As it stands though,
+	// we require combining two approaches:
+	//
+	//  - QPalette, because it's the most reliable with non-KDE style engines
+	//    (including macOS but most notably excluding WindowsVista)
+	//
+	//  - Stylesheet, because Breeze in particular does not want to use
+	//    QPalette at all
+	//
+	// In particular, we make sure to provide the QPalette as a fallback for
+	// engines that *do* support QPalette, and enforce the stylesheet only if
+	// we aren't running on a known-good engine so we don't cause the
+	// scrollbars to be colored wrong on e.g. Fusion against a system-defined
+	// dark color scheme.
+	//
+	// This sucks but it'll do until Wespal v0.6.0 replaces the QScrollArea
+	// approach with something more adaptable to our needs.
+
+	QPalette pal;
+	if (!colorName.isEmpty())
+		pal.setColor(QPalette::Dark, QColor{colorName});
+
+	std::apply([&pal](auto&&... widget) {
+		(widget->viewport()->setPalette(pal), ...);
+	}, containers);
+
+	QString currentEngine = style() ? style()->name() : "";
+	static const QStringList safeEngines{
+		"windowsvista", "windows11", "windows", "macos", "fusion"
+	};
+
+	if (!safeEngines.contains(currentEngine)) {
+		if (!colorName.isEmpty()) {
+			const QString colorStyle = "* { background-color: " % colorName % "; }";
+
+			std::apply([&colorStyle](auto&&... widget) {
+				(widget->viewport()->setStyleSheet(colorStyle), ...);
+			}, containers);
+		} else {
+			std::apply([](auto&&... widget) {
+				(widget->viewport()->setStyleSheet({}), ...);
+			}, containers);
+		}
 	}
 
 	MosCurrentConfig().setPreviewBackgroundColor(colorName);
@@ -1673,7 +1870,7 @@ void MainWindow::on_cbxViewMode_currentIndexChanged(int index)
 
 	setViewMode(newMode);
 
-	for (auto* action : viewModeActions_)
+	for (auto* action : std::as_const(viewModeActions_))
 	{
 		if (action->data() == newMode && !action->isChecked()) {
 			action->setChecked(true);
@@ -1923,7 +2120,7 @@ void MainWindow::on_actionPaste_triggered()
 	imagePath_ = tr("Clipboard image") % ".png";
 	updateWindowTitle(true, {}, ImageOriginClipboard);
 
-	refreshPreviews();
+	refreshPreviews(false, false);
 	enableWorkArea(true);
 }
 
@@ -1935,4 +2132,44 @@ void MainWindow::onClipboardChanged(QClipboard::Mode mode)
 	auto* clipboard = QGuiApplication::clipboard();
 
 	ui->actionPaste->setEnabled(clipboard && !clipboard->image().isNull());
+}
+
+void MainWindow::onWatchedFileChanged(const QString& path)
+{
+	// NOTE: we always assume path is equivalent to imageFile_. This should
+	// always be the case since we only ever add the path of the current file
+	// to the watcher at the moment.
+
+	QFileInfo info{path};
+	bool isExtant = watcher_->files().contains(path) || watcher_->directories().contains(path);
+
+	if (!isExtant) {
+		// File was deleted, may have been replaced with a new inode by a
+		// different process in order to perform an atomic write
+		if (info.exists(path)) {
+			// If the file got clobbered with a dir we should still continue looking
+			// at it until it stops being a dir.
+			watcher_->addPath(path);
+			// If a dir got clobbered with a file, reload the file.
+			if (!info.isDir()) {
+				isExtant = true;
+			}
+		}
+	}
+
+	// At this point we are 100% sure the path exists and is not a dir (or
+	// ceased to be a dir). Still, avoid complaining loudly if the reload fails
+	// just in case. (TODO: we should gently notify the user of errors)
+	if (isExtant) {
+		doReloadFile(true);
+	}
+}
+
+void MainWindow::on_actionAutomaticallyReload_triggered(bool checked)
+{
+	MosCurrentConfig().setAutoReload(checked);
+	refreshWatcher();
+	if (checked) {
+		doReloadFile(true); // Catch up on what we missed
+	}
 }

@@ -1,7 +1,7 @@
 /*
  * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
  *
- * Copyright (C) 2008 - 2024 by Iris Morelle <iris@irydacea.me>
+ * Copyright (C) 2008 - 2025 by Iris Morelle <iris@irydacea.me>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,8 @@ class QAbstractScrollArea;
 class QButtonGroup;
 class QDragEnterEvent;
 class QDropEvent;
+class QFileSystemWatcher;
+class QListWidgetItem;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -63,6 +65,10 @@ protected:
 
 	virtual void dragEnterEvent(QDragEnterEvent* event) override;
 	virtual void dropEvent(QDropEvent* event) override;
+
+#if defined(WESPAL_UI_SUPPORTS_APP_COLOR_SCHEME) && defined(Q_OS_WINDOWS)
+	virtual bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
+#endif
 
 private:
 	using ViewMode = MosConfig::ImageViewMode;
@@ -120,6 +126,8 @@ private:
 	QImage originalImage_;
 	QImage transformedImage_;
 
+	QFileSystemWatcher* watcher_;
+
 	ViewMode viewMode_;
 	RcMode   rcMode_;
 
@@ -174,12 +182,15 @@ private:
 
 	void doSaveFile();
 	void doCloseFile();
-	void doReloadFile();
+	void doReloadFile(bool silent = false);
 	void doAboutDialog();
 
 	void setViewMode(ViewMode newViewMode);
 	void setRcMode(RcMode rcMode);
 	void enableWorkArea(bool enable);
+	void updateSaveActions();
+	void refreshWatcher();
+	void stopWatchingFiles();
 
 	bool confirmFileOverwrite(const QStringList& paths);
 
@@ -191,7 +202,7 @@ private:
 	QStringList doSaveColorBlend(const QString& dirPath);
 	QStringList doSaveColorShift(const QString& dirPath);
 
-	void refreshPreviews(bool skipRerender = false);
+	void refreshPreviews(bool skipRerender = false, bool keepPos = true);
 
 	QString currentPaletteName(bool paletteSwitchMode = false) const;
 	ColorList currentPalette(bool paletteSwitchMode = false) const;
@@ -200,8 +211,11 @@ private:
 
 	void setPreviewBackgroundColor(const QString& colorName);
 
+	QPointF currentScrollPercent(QAbstractScrollArea* scrollArea) const;
+
 	void resetPreviewLayout(QAbstractScrollArea* scrollArea,
-							QWidget* previewWidget);
+							QWidget* previewWidget,
+							QPointF scrollPercent);
 
 	void doCustomPreviewBgSelect();
 	void updateCustomPreviewBgIcon();
@@ -211,6 +225,7 @@ private:
 private slots:
 	void on_action_Reload_triggered();
 	void on_listRanges_currentRowChanged(int currentRow);
+	void on_listRanges_itemChanged(QListWidgetItem* item);
 	void on_cbxNewPal_currentIndexChanged(int index);
 	void on_cbxKeyPal_currentIndexChanged(int index);
 	void on_action_Save_triggered();
@@ -245,7 +260,7 @@ private slots:
 	void onColorBlendLineEditChanged(const QString& value);
 	void onColorBlendButtonClicked();
 
-	void onColorShiftValueChanged(ColorShiftChannel ch, int value);
+	void onColorShiftValueChanged(MainWindow::ColorShiftChannel ch, int value);
 
 	void onRcSelectButtonClicked(bool check);
 	void on_actionCopy_triggered();
@@ -253,4 +268,6 @@ private slots:
 	void on_actionPaste_triggered();
 
 	void onClipboardChanged(QClipboard::Mode mode);
+	void onWatchedFileChanged(const QString& path);
+	void on_actionAutomaticallyReload_triggered(bool checked);
 };

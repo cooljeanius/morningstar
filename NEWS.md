@@ -1,18 +1,57 @@
 Changelog
 =========
 
+Version 0.5.4
+-------------
+
+### New features
+
+### Bug fixes
+
+### Other changes
+
+
+Version 0.5.3
+-------------
+
+### Bug fixes
+
+* Fixed an existing bug with dark mode or dark system color schemes on all platforms causing scrollbars to be forcibly rendered in a light color whenever a non-default preview background color is set.
+
+
+Version 0.5.2
+-------------
+
+### New features
+
+* Added automatic reloading of files that have been changed on disk, as well as a File menu option controlling this behavior (enabled by default).
+* Dark mode UI is now supported on Windows.
+
+### Bug fixes
+
+* Prevent using the Save action when in color range mode with no color ranges checked.
+
+### Other changes
+
+* Color square icons in lists now use a more suitable border color depending on the UI color scheme.
+
+
 Version 0.5.1
 -------------
 
 ### New features
 
 * Reworked the functionality to deselect all color ranges so instead it deselects all items other than the active color range, as well as ensures the active color range is selected if it isn't already.
+* Dark mode UI is now supported on macOS.
 
 ### Bug fixes
 
+* The image view no longer scrolls back to the center of the image when zooming in/out, selecting a different color range/palette/transform type, or closing Preferences (#14).
 * Fixed QuaZip-related build errors with Qt 6.7.2 and later when using `ENABLE_BUILTIN_IMAGE_PLUGINS`.
 
 ### Other changes
+
+* Windows and macOS versions built against Qt 6.9.3.
 
 
 Version 0.5.0

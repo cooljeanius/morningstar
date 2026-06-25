@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21.1)
-project(wespal VERSION 0.5.1 LANGUAGES C CXX)
+project(wespal VERSION 0.5.4 LANGUAGES C CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOUIC ON)
@@ -146,7 +146,7 @@ qt_add_executable(wespal WIN32 MACOSX_BUNDLE
 set_target_properties(wespal PROPERTIES
 	MACOSX_BUNDLE_BUNDLE_NAME "Wespal"
 	MACOSX_BUNDLE_GUI_IDENTIFIER "me.irydacea.Wespal"
-	MACOSX_BUNDLE_COPYRIGHT "© 2008 - 2024 by Iris Morelle"
+	MACOSX_BUNDLE_COPYRIGHT "© 2008 - 2025 by Iris Morelle"
 	MACOSX_BUNDLE_ICON_FILE Wespal.icns
 )
 

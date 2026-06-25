@@ -1,7 +1,7 @@
 /*
  * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
  *
- * Copyright (C) 2010 - 2024 by Iris Morelle <iris@irydacea.me>
+ * Copyright (C) 2010 - 2025 by Iris Morelle <iris@irydacea.me>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,36 @@
 
 #include "appconfig.hpp"
 
+#include <QApplication>
 #include <QBuffer>
 #include <QSettings>
 #include <QMessageBox>
+#include <QStyleHints>
+
+#if defined (WESPAL_UI_SUPPORTS_APP_COLOR_SCHEME) && defined(Q_OS_WINDOWS)
+#	define WIN32_LEAN_AND_MEAN
+#	define NOUSER
+#	define NOGDI
+#	define NOMINMAX
+#	include <windows.h>
+// HACK to find out whether Windows app dark mode is on whenever the system
+// settings change. Based on <https://stackoverflow.com/a/70753913>
+static bool windowsAppDarkThemeOn()
+{
+	DWORD regValue = 0;
+	DWORD regValueSize = sizeof(regValue);
+	auto status = RegGetValueA(
+		HKEY_CURRENT_USER,
+		"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+		"AppsUseLightTheme",
+		RRF_RT_REG_DWORD,
+		nullptr,
+		&regValue,
+		&regValueSize);
+	// Assume light theme on error/if the value does not exist
+	return status == ERROR_SUCCESS && regValue == 0;
+}
+#endif
 
 namespace MosConfig {
 
@@ -38,12 +65,14 @@ Manager::Manager()
 	: imageFilesMru_()
 	, customColorRanges_()
 	, customPalettes_()
+	, autoReload_()
 	, rememberMainWindowSize_()
 	, mainWindowSize_()
 	, defaultZoom_()
 	, previewBackgroundColor_()
 	, rememberImageViewMode_()
 	, imageViewMode_()
+	, appColorScheme_()
 	, pngVanityPlate_()
 {
 	QSettings qs;
@@ -51,6 +80,8 @@ Manager::Manager()
 	//
 	// Workspace configuation
 	//
+
+	autoReload_ = qs.value("preview/autoReload", true).toBool();
 
 	rememberMainWindowSize_ = qs.value("preview/rememberWindowSize", true).toBool();
 
@@ -63,6 +94,10 @@ Manager::Manager()
 	rememberImageViewMode_ = qs.value("preview/rememberMode", true).toBool();
 
 	imageViewMode_ = qs.value("preview/mode", ImageViewVSplit).value<ImageViewMode>();
+
+	appColorScheme_ = qs.value("preview/colorScheme", AppColorSchemeOSDefault).value<AppColorScheme>();
+
+	applyAppColorScheme();
 
 	//
 	// Backend configuration
@@ -116,7 +151,7 @@ Manager::Manager()
 		ColorList palette;
 		palette.reserve(values.count());
 
-		for (const auto& value : values)
+		for (const auto& value : std::as_const(values))
 			palette.emplaceBack(value.toUInt());
 
 		customPalettes_.insert(id, palette);
@@ -141,6 +176,15 @@ Manager::Manager()
 	}
 
 	qs.endArray();
+}
+
+void Manager::setAutoReload(bool autoReload)
+{
+	QSettings qs;
+
+	autoReload_ = autoReload;
+
+	qs.setValue("preview/autoReload", autoReload);
 }
 
 void Manager::setRememberMainWindowSize(bool remember)
@@ -197,6 +241,42 @@ void Manager::setImageViewMode(ImageViewMode imageViewMode)
 	qs.setValue("preview/mode", imageViewMode);
 }
 
+void Manager::setAppColorScheme(AppColorScheme scheme)
+{
+	QSettings qs;
+
+	appColorScheme_ = scheme;
+
+	qs.setValue("preview/colorScheme", scheme);
+
+	applyAppColorScheme();
+}
+
+void Manager::applyAppColorScheme()
+{
+#ifdef WESPAL_UI_SUPPORTS_APP_COLOR_SCHEME
+	switch (appColorScheme_) {
+		case AppColorSchemeOSLight:
+			QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#ifdef Q_OS_WINDOWS
+			QApplication::setStyle("WindowsVista");
+#endif
+			break;
+		case AppColorSchemeOSDark:
+			QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
+#ifdef Q_OS_WINDOWS
+			QApplication::setStyle("Fusion");
+#endif
+			break;
+		default:
+			QGuiApplication::styleHints()->unsetColorScheme();
+#ifdef Q_OS_WINDOWS
+			QApplication::setStyle(windowsAppDarkThemeOn() ? "Fusion" : "WindowsVista");
+#endif
+	}
+#endif
+}
+
 void Manager::setPngVanityPlate(bool enable)
 {
 	QSettings qs;
@@ -248,7 +328,7 @@ void Manager::setCustomPalettes(const QMap<QString, ColorList>& palettes)
 
 		QString colorList;
 
-		for (auto color : palette)
+		for (auto color : std::as_const(palette))
 		{
 			if (!colorList.isEmpty())
 				colorList += ',';

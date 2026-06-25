@@ -1,7 +1,7 @@
 /*
  * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
  *
- * Copyright (C) 2012 - 2024 by Iris Morelle <iris@irydacea.me>
+ * Copyright (C) 2012 - 2025 by Iris Morelle <iris@irydacea.me>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,6 +75,13 @@ QIcon createColorIconPrivate(const QColor& color,
 	QPen pen{Qt::black, borderWidth};
 	QRectF borderRect{QPointF{outerMargin, outerMargin},
 					  QSizeF{size}.shrunkBy(innerMargin)};
+
+	if (target) {
+		// NOTE: We use the global palette instead of the target widget's own
+		// because Fusion yields the wrong color values on Windows in dark mode
+		// (at least as of Qt 6.9.3).
+		pen.setColor(QGuiApplication::palette().color(target->foregroundRole()));
+	}
 
 	painter.setBrush(brush);
 	painter.setPen(pen);

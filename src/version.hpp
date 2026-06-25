@@ -1,7 +1,7 @@
 /*
  * Wespal (codename Morning Star) - Wesnoth assets recoloring tool
  *
- * Copyright (C) 2010 - 2024 by Iris Morelle <iris@irydacea.me>
+ * Copyright (C) 2010 - 2025 by Iris Morelle <iris@irydacea.me>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,11 @@
 
 #pragma once
 
-#define MOS_VERSION_STRING      "0.5.1-dev"
+#define MOS_VERSION_STRING      "0.5.4-dev"
 
 #define MOS_VERSION_MAJOR       0
 #define MOS_VERSION_MINOR       5
-#define MOS_VERSION_RELEASE     1
+#define MOS_VERSION_RELEASE     4
 
 #ifndef RC_INVOKED
 
